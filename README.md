@@ -1,7 +1,7 @@
 # QingStation （青站）
 A compact weather station.
 
-![](figures/qingstation-render1.png)
+![](doc/figures/qingstation-render1.png)
 
 ## About this project
 Before introducing this project, I shall mention my another project **DeepPlankter**.
@@ -83,9 +83,5 @@ The method is to use the reflection of a piece of trapezoid glass (hand made..).
 When rain drop on the surfaces of glass, it will reduce the reflection, therefore the signal magnitude on the reciever will change.
 We can either use calibrated absolute value or use the covariance. 
 This sensor will not be accurate. Even when on the sea, droplets from large waves can easily keep the sensor wet all the time.  
-
-
-
-
 
 
