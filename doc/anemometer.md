@@ -26,36 +26,49 @@ The advantage of ultrasonic anemometer compared to other types
 ## Practical Issues, Solution and Compromise
 In reality, things normally don't work as we want, especially analog circuits. 
 
-Here is the schematic of the second version(v1.1), details will be explained in the following sections.
+Here is the schematic of the second version(PCB v1.1), details will be explained in the following sections.
 ![](figures/anemometer-sch.png)
 
 ### Ultrasonic Transducer, Driver 
 
 #### Transducers
 I brought a few different parts for the test.
-- A 40kHz 10mm waterproof(P/N: EU10AIF40H07T/R)
-- A 200kHz 10mm waterproof(P/N: EU10PIF200H07T/R)
-- A 40kHz 16mm waterproof (P/N: NU40A16TR-1)
+- A `40kHz` `10mm` waterproof(P/N: EU10AIF40H07T/R)
+- A `200kHz` `10mm` waterproof(P/N: EU10PIF200H07T/R)
+- A `40kHz` `16mm` waterproof (P/N: NU40A16TR-1)
 - A few HC-SR04 type open-end transducer. None-waterproof. 
 
 The three with part number have similar parameters. 
 
-Transmition sound pressure 10V(0dB=0.02mPa) ≥106dB
-Receive sensitive at40KHz (0dB=V/ubar)：≥-75dB
-Capacitive are all at a few nF depended on their diameter. 
+Transmition sound pressure `10V(0dB=0.02mPa) ≥106dB`
+Receive sensitive at `40KHz (0dB=V/ubar)：≥-75dB`
+Capacitive are all at a few `nF` depended on their diameter. 
 
-I did not test the HC-SR04 because they are much larger than the 10mm one. 
+I did not test the HC-SR04 because they are much larger than the `10mm` one. 
 
-The final decision is the first one, 40kHz 10mm waterproof(P/N: EU10AIF40H07T/R).
+The final decision is the first one, `40kHz 10mm` waterproof(P/N: EU10AIF40H07T/R).
 The size is small, which helps to reduce the overall assembly size. 
-It is inexpensive compared to the 200k (4 times the cost).
-It has a good spreading directivity(less than -3dB@30degree), which means that I didn't need to fix it at an angle to the plate.
+It is inexpensive compared to the `200k` (4 times the cost). 
+High frequency can bring shorter pulse but thoes `40KHz` already good enough. 
+It has a good spreading directivity(less than `-3dB @ 30degree`), which means that I didn't need to fix it at an angle to the plate.
 Everythings lay down will be a big plus to mechanical design and assembly.
+
+Frequency
+> Ideally, the pulses should as short as possible.
+> We normally send 3~4 pulses.
+>
+> `f=40k, λ=8.4mm` pulse width `33mm` 
+> 
+> `f=200k, λ=1.68mm` pulse width `6.72mm` 
+>
+> Both are smaller than the Height (`5cm`). 
+> Shorter wavelenght always better, however, signal signal also degrade faster through propagation.
+
 
 The only concern left is whether the signal pules is short enough 
 to avoid mix signal between the direct sound (we don't want) and reflective sound (we need). 
 
-I didn't consider muRata MA40E8-2 which was used in Lau's blog because it has been discontinued and it was more expensive anyway. 
+I didn't consider muRata `MA40E8-2` which was used in Lau's blog because it has been discontinued and it was more expensive anyway. 
 
 #### Driver Design
 Driver design is a tricky part. A lot of pain here. 
@@ -71,7 +84,7 @@ These chips are low-cost and in a small package.
 
 However, this decision introduced a huge interference issue.
 
-The MAX3222 drive the transducer through a 1uF capacitor from one of its output channel. 
+The MAX3222 drive the transducer through a `1uF` capacitor from one of its output channel. 
 One the receiver (transducer) side using a set of clamp diodes and resistors will ensure the signal won't travel back to the driver side. 
 Also, the diodes should block any noise that comes from the MAX3232. But it doesn't.
 
@@ -108,7 +121,7 @@ So I designed a second PCB (v1.1) using MAX3222 which can be placed into a shutd
 Hopefully, it can eliminate the issues. 
 
 
-#### Echo Signal and Amplifier
+### Echo Signal and Amplifier
 
 (I rarely touch analog circuit since forever, this definitely does not help)
 
@@ -116,17 +129,17 @@ The echo signal first passes through a `4.7k` resistor then a `100nF` capacitor 
 Then, it passes through a analog switch (4052, Low Voltage variance), before it finally reaches the amplifier. 
 
 Since we use a single rail power supply, the 4052 does not allow negative voltage signal to pass.
-Instead, we will charge the `100nF` capacitor to the virtual ground (1/2 Vreff) 
+Instead, we will charge the `100nF` capacitor to the virtual ground (`1/2 Vreff`) 
 before we start to send the pulses and collect measurement. 
 
-**Amplifiers**
+#### Amplifiers
 
 In the amplifier, I use the most common LMV358 dual AMP. 
 
 In PCB v1.0, the OPA AMP was only set to `10x`, which I cannot even see the signal in my ADC data. 
 Overestimated the signal strength.
 I later changed the gain to `~200x` to be able to record a clear signal. 
-However, the signal reading ranges is still too small (around 100 digits/pp in a 12bit ADC). 
+However, the signal reading ranges is still too small (around `100 digits/pp` in a `12bit, 4096` ADC). 
 
 In the PCB v1.0, only a single-stage amplifier is used to amplify the echo, 
 the other one is used for generating a low impedance virtual ground. 
@@ -138,11 +151,11 @@ The single-stage high gain amplifier has high impedance so the charging is slow.
 In PCB v1.1, the 2 OPA AMPs are all used to amplify the echo. 
 The first stage was set to low impedance. 
 Hopefully to reduce the charging time.
-The 2 stages AMP also allow for higher total gains. 
+The 2 stages AMP also allow higher total gains. 
 The virtual ground is now provided by a voltage divider and a large capacitor. 
-From the simulation, it looks ok. 
+The new circuit looks good . 
 
-**The noise from driver**
+#### The noise from driver
 
 As the gain is quite large, I think the small capacitor in the clamp diodes let the driver's noise passed to the receiver side. 
 This is also approved in a simulation circuit built using EasyEDA.
@@ -162,11 +175,11 @@ ADC is configured to `1MHz`. I did not configure it to higher because it is not 
 At each burst, the ADC sample for `1ms` exactly `1000` samples.
 
 When does the first echo arrive?
-> Assemue Height(H)=5cm, Pitch(D)=4cm, Sound speed(C)=336m/s
+> Assemue Height(H)=`5cm`, Pitch(D)=`4cm`, Sound speed(C)=`336m/s`
 >
 > The path the sound travel is `S = sqrt((D/2)^2 + H^2) * 2 = 10.7cm`
 >
-> `t = 0.107 / 336 = 318uS`
+> First pulse arrived at `t = 0.107 / 336 = 318uS`
 
 
 
