@@ -5,7 +5,7 @@ This documentation is dedicated to the ultrasonic anemometer design and tuning.
 # Introduction
 Anemometer is the most interesting sensor on QingStation. 
 However, it is also very challenging for me since I got almost no experience 
-(I don't even know how to use OPA AMP at the beginning).
+(I don't even know how to use OP AMP at the beginning).
 
 A very good blog I learnt from time to time is this one [Anemometer by Hardy Lau](https://www.dl1glh.de/ultrasonic-anemometer.html#advancement) 
 This log is very informative and already cover most of the knowledge needed to build your own ultrasonic anemometer. 
@@ -22,6 +22,9 @@ The advantage of ultrasonic anemometer compared to other types
 # Methods
 
 ## Basic Principle
+
+
+
 
 ## Practical Issues, Solution and Compromise
 In reality, things normally don't work as we want, especially analog circuits. 
@@ -134,30 +137,36 @@ before we start to send the pulses and collect measurement.
 
 #### Amplifiers
 
-In the amplifier, I use the most common LMV358 dual AMP. 
+In the amplifier, I use the most common LMV358 dual OP AMP. 
 
-In PCB v1.0, the OPA AMP was only set to `10x`, which I cannot even see the signal in my ADC data. 
+In PCB v1.0, only a single-stage amplifier is used to amplify the echo, 
+while the other one is used for generating a low impedance virtual ground. 
+
+The OP AMP was only set to `10x`, which I cannot even see the signal in my ADC data. 
 Overestimated the signal strength.
 I later changed the gain to `~200x` to be able to record a clear signal. 
 However, the signal reading ranges is still too small (around `100 digits/pp` in a `12bit, 4096` ADC). 
 
-In the PCB v1.0, only a single-stage amplifier is used to amplify the echo, 
-the other one is used for generating a low impedance virtual ground. 
+Later, until I accidently saw on tutorial on YouTube [Basics of Op Amp Gain Bandwidth Product and Slew Rate Limit](https://youtu.be/UooUGC7tNRg)
+then I realized what was wrong here. The bandwidth of LMV358 (as well as all other op amps) list in datasheet is "Unit Gain" also equal to "Gain–Bandwidth Product" 
+which does not cover the full frequency range. 
+LMV358 will only have around maximum `1MHz/40kHz = 25x` gain no matter how much I set.  
+What make things worst is I added a capacitor on the feedback loop for a RC filter.
+Now I see why I could not see a signal at the beginning, the final bandwidth is too small filtered out all signals. 
 
-This single-stage amplifier brings some problem, when the channel switched, it needs to charge the capacitor (100nF).  
-It needs a few milliseconds to charge the capacitor if there is any voltage difference. 
-The single-stage high gain amplifier has high impedance so the charging is slow. 
-
-In PCB v1.1, the 2 OPA AMPs are all used to amplify the echo. 
+Unfortunately, by the time I learnt the GBP parameter, PCB V1.1 fabrication and assembly are already finished and on its long way to me. 
+In PCB v1.1, the 2 OP AMPs are all used to amplify the echo. 
 The first stage was set to low impedance. 
-Hopefully to reduce the charging time.
-The 2 stages AMP also allow higher total gains. 
+The 2 stages OP AMPs also allow higher total gains while still let the `40KHz` signal pass. 
 The virtual ground is now provided by a voltage divider and a large capacitor. 
 The new circuit looks good . 
+However, in this circuit, we still cannot test `200KHz` transducer, 
+unless I change to a high bandwidth OP AMP and drop plenty of my LMV358 brought earlier.
 
-#### The noise from driver
 
-As the gain is quite large, I think the small capacitor in the clamp diodes let the driver's noise passed to the receiver side. 
+#### The noise from the driver
+
+I think the small capacitor in the clamp diodes let the driver's noise passed to the receiver side. 
 This is also approved in a simulation circuit built using EasyEDA.
 With clean power, I can still see small amplitude noise pass through. 
 The 1N4148 cannot block the noise from the driver side completely. 
@@ -169,19 +178,19 @@ That is why I change the MAX3232 to MAX3222, the receiver's charge pump has to s
 #### ADC Setting 
 
 ADC is configured to `1MHz`. I did not configure it to higher because it is not necessary.
-- LMV358 only have 1MHz bandwidth.
+- LMV358 only have `1MHz` GBP.
 - Sub resolution accuracy can be achieved by linear interpolation (details in signal processing section). 
 
-At each burst, the ADC sample for `1ms` exactly `1000` samples.
+At each burst, the ADC sample for `1ms` exactly `1000` samples. 
+It is enough for Height in range of 4CM to 10CM
 
 When does the first echo arrive?
 > Assemue Height(H)=`5cm`, Pitch(D)=`4cm`, Sound speed(C)=`336m/s`
 >
-> The path the sound travel is `S = sqrt((D/2)^2 + H^2) * 2 = 10.7cm`
+> The distance that the sound travel is `S = sqrt((D/2)^2 + H^2) * 2 = 10.7cm`. 
 >
-> First pulse arrived at `t = 0.107 / 336 = 318uS`
-
-
+> The first pulse arrives at around `t = 0.107 / 336 = 318us` after pulses sent when the wind is claim. 
+> Even when H=`10cm` t=`588us`. 1000 samples is more than enough.
 
 #### Preprocess
 ADC to Float. Filter. Zeroing. 
