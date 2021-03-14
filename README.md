@@ -24,7 +24,7 @@ The weather station should have a maximum 10mA average current.
 
 - Small & lightweight
 
-The drone is small, with the deck width of only ~12CM. 
+The drone is small, with a deck width of only ~12CM. 
 Ideally, the size of the weather station should be less than the deck. 
 When installing it on the ship, it should be placed as high as possible. 
 Elevating a large mass on the mast decreases the stability of the ship. 
@@ -32,7 +32,7 @@ Elevating a large mass on the mast decreases the stability of the ship.
 - Versatile
 
 Today's digital sensors are easy to use. 
-We can implements as much as possible as long as we got space on the PCB. 
+We can implement plenty of them as possible as long as we have space on the PCB. 
 
 
 ## Features and functions
@@ -102,21 +102,21 @@ A [good project](https://www.dl1glh.de/ultrasonic-anemometer.html#advancement) b
 
 ### Configuration methods
 
-There are many way to talk to QingStation, but none of them are wireless. 
+There are many ways to talk to QingStation, but none of them is wireless. 
 
 The methods I intended to use are:
-- A configuration file (json) in SDCard.
+- A configuration file (JSON) in SDCard.
 - USB port (A virtual UART device, also known as CDC)
 - UART1 (act as AT Server or AT Client) 
 
 Currently, the JSON method is the primary method. Because it is easy to use and the settings are obvious. 
 
-USB port and UART require the PC to have a terminal or some tools can talk through serial port. 
-AT CMD is ok to use but setting are not easily done by human. 
+USB port and UART require the PC to have a terminal or some tools that can talk through a serial port. 
+AT CMD is ok to use but setting are not easily done by a human. 
 
-For the UART1, I plan to make it dedicated for AT server or client. 
-When it is useed as AT server, the QingStation can be turned to a device that accessed by Arduino or other board. 
-When it is used as AT Client, I try implement some basic function control wireless model, such as BLE, LoRa, or SIM800 GPRS module. 
+For the UART1, I plan to make it dedicated to AT server or client. 
+When it is used as AT server, the QingStation can be turned into a device that accessed by Arduino or other board. 
+When it is used as AT Client, I try to implement some basic function control wireless model, such as BLE, LoRa, or SIM800 GPRS module. 
 
 # Author
 Jianjia Ma 
