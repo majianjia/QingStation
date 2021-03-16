@@ -26,19 +26,24 @@ The advantage of ultrasonic anemometer compared to other types:
 
 ![](figures/ultrasonic_anemometer_principle.png)
 
-The principle is very simple, the sound wave propagate in a medium (air) is affected by the movement of the medium. 
-Using the known propagating path and the time of propagation, we can calculate the speed of medium. 
+The principle is very simple, the sound wave that propagating in a medium (air) is affected by the movement of the medium. 
+By using the known propagating path and the time of propagation, we can calculate the speed of medium. 
 
-In the above graph, we can see the travel of wind *bc* added to the sound propagation *ab* result in the travel path *ac*.
+In the above graph, we can see the travel of wind *BC* added to the sound propagation *AB* result in the travel path *AC*.
 
 [Lau](https://www.dl1glh.de/ultrasonic-anemometer.html#advancement) 
 has posted all related equations (with different notation). 
 
-
+In C language:
 ~~~
 alpha = arctan(2*H/D);
 v = H/sin(alpha)*cos(alpha)*(1/t1 - 1/t2);// wind speed
 c = H/sin(alpha)*(1/t1 + 1/t2);           // sound speed
+~~~
+
+To measure the wind direction, use `arctan` on 2 perpendicular pairs.  
+~~~
+beta = arctan(NS/EW);  // north->south, east->west
 ~~~
 
 ## Practical issues, solution and compromise
@@ -76,7 +81,7 @@ Everythings lay down flat will be a big plus to mechanical design and assembly.
 
 About frequency selection:
 > Ideally, the pulses should as short as possible.
-> We normally send 3~4 pulses.
+> We normally send `3~4` pulses.
 >
 > `f=40k, λ=8.4mm` pulse width `33mm` 
 > 
