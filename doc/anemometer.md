@@ -36,14 +36,14 @@ has posted all related equations (with different notation).
 
 In C language:
 ~~~
-alpha = arctan(2*H/D);
+alpha = atan(2*H/D);
 v = H/sin(alpha)*cos(alpha)*(1/t1 - 1/t2);// wind speed
 c = H/sin(alpha)*(1/t1 + 1/t2);           // sound speed
 ~~~
 
-To measure the wind direction, use `arctan` on 2 perpendicular pairs.  
+To measure the wind direction, use `arctan2` on 2 perpendicular pairs.  
 ~~~
-beta = arctan(NS/EW);  // north->south, east->west
+beta = atan2(NS, EW);  // north->south, east->west
 ~~~
 
 ## Practical issues, solution and compromise
@@ -108,7 +108,7 @@ These RS-232 chips have many alternatives, the driving capability is good enough
 The one used here is MAX3222, it provides a shutdown pin that can save power compared to more often used MAX3232. 
 These chips are low-cost and packed in a small MSOP package. 
 
-However, the use of these chips introduced a huge interference issue from driver side.
+However, these chips introduced a huge interference issue from driver side.
 
 The MAX3222 drive the transducer through a `1uF` capacitor from one of its output channel. 
 On the receiver (transducer) side, a set of clamp diodes to ground and resistors should ensure the signal won't travel back to the driver side. 
@@ -117,9 +117,9 @@ Also, an other set of clamp diodes place in serial to the driver capacitor shoul
 Because the MAX3232/3222 are generating negative and positive driving voltage based on charge pump method, 
 it is impossible to get a smooth output voltage but can only decrease the frequency of switching by increasing those capacitors. 
 
-The signal on the capacitor looks like this:
+The signal on the driving capacitor looks like this:
 
-![](max3232_driver_noise.jpg)
+![](figures/max3232_driver_noise.jpg)
 
 Although after the clamp diodes, the noise is "negligible" even my oscilloscope cannot detect, but somethings still pass there. 
 Which results in a distortion of the receiving wave.  
