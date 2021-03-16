@@ -171,7 +171,7 @@ I overestimated the signal strength.
 I later changed the gain to `~200x` to be able to record a clear signal. 
 However, the signal reading ranges is still too small (around `100 digits/pp` in a `12bit, 4096` ADC). 
 
-Later, until I accidently saw on tutorial on YouTube [Basics of Op Amp Gain Bandwidth Product and Slew Rate Limit](https://youtu.be/UooUGC7tNRg)
+Later, until I accidently saw a tutorial on YouTube [Basics of Op Amp Gain Bandwidth Product and Slew Rate Limit](https://youtu.be/UooUGC7tNRg)
 then I realized what was wrong here. The bandwidth of LMV358 (as well as all other op amps) list in datasheet is "Unit Gain" also equal to "Gain–Bandwidth Product" 
 which does not cover the full frequency range. 
 LMV358 will only have around maximum `1MHz/40kHz = 25x` gain no matter how much I set.  
