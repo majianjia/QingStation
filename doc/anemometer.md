@@ -229,6 +229,7 @@ So when there is no signal, the signal output should sit around `4095/2 = 2047.5
 Since the op amp bandwidth is already low, no extra low-pass filter or oversampling is needed.
 
 In the preprocessing stage, signals are brought back to zero and converted to floating-point. 
+They are also normalized to the maximum at `1`.
 
 #### Echo pulse
 
@@ -254,6 +255,13 @@ It is fairly straight forward to perform a matched filter (pulse compression).
 But it requires much more CPU time since it is basically a signal correlation (same as a convolution in machine learning).
 If it is needed, quantisation to `8/16bit` fixed-point then use Neural Network acceleration core will help the speed.
 
+In a rough test, for bark-code 4.1 `+++-`, the MCU tooks `46ms` to compute all 4 channels (correlation of `100 x 1000`).  
+The load is ok, compared to the *peak match* method, which only take `6m1s, it takes too much time. 
+I didn't test a correlation between 2 channels, e.g. North vs. South, 
+which will leand to `1000*1000` maximum, `10` times of the trial. 
+Of course, it is not necessary to make the full correlation, a `300 x 300` windows for both signal should be enough. 
+which should take around `50ms`. It can be as a backup to the *peak match* method. 
+
 
 #### Zero-Crossing detection and interpolation
 To further improve the resolution to sub digit of ADC sampling period, i.e. `<1us`, 
@@ -267,14 +275,15 @@ It takes around `1` second.
 Because all `4` channels shared the only `1` amplifier, they also share the minor bias if there is any so that will be cancelled out. 
 The actual zero offsets of each channel are all at around `2047~2048`, very stable and accurate.  
 
-Besides, during a calm wind, collect a set of zero-crossing as the baseline of zero wind speed. 
+Besides, during a calm wind, collect a set of zero-crossing as the baseline of zero wind speed reference. 
 
-For each channel, the firmware interpolates `10` zero-crossing points around the maximum amplitude of each echo (easier to located).
-Then it calculates the difference in time between the previous collected zero-crossing baseline in calm wind.
-After that, the maximum `2` and minimum `2` time difference were excluded and the other left is averaged. 
+For each channel, we interpolate `6` zero-crossing points around the maximum amplitude of each echo.
+As the waves around peaks are the most identical. 
+These zero crossing are averaged and produce one number, which represent the location of these crossing. 
+There is no need to compare all the zero-crossing moment as I found out these zero-crossing are very stable. 
 
 This result in a pretty stable sub-digit accuracy, at least in calm wind. 
-A simple test results in a standard error at `0.074us`, when converting to windspeed is `0.1m/s`.
+A simple test results in a standard error at `0.037us`, when converting to windspeed is `0.051m/s`.
 This level of accuracy that a simple processing can provide is already very promising!
 
 #### Extracting wind speed
