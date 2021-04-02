@@ -251,10 +251,29 @@ You can see that there are plenty of pulses instead of `4` which we sent.
 The envelope of the echo is very beautiful diamond shape. We can use the shape to measure a rough propagating time. 
 Or we can simply use the maximum magnitude to measure it if the signal is not distorted as mentioned in driver sections. 
 
-The accuracy of matching the signal can be as high as the resolution of time in the ADC sampling period, i.e. `~1us @ 1Msps`.
+In the practice, I tried a few different excitations, including bark-coded as suggested by Lau. 
+~~~
+    // single rate (40k)
+    //uint16_t pulse[] = {50, 50, 50, 50};
 
-This is by now the most unstable part because the inference from the driver affects the detection of the echo.
-Result in sometimes this method will fail and the detection offset by one period, `25us`. 
+    // Double rate (80k), to control the +1 or −1 phase
+    //uint16_t pulse[] = {H, L, H, L, H, L, H, L}; // normal -> ++++
+    //uint16_t pulse[] = {H, L, H, L, H, L, L, H, L, H}; // normal suppressed -> +++--
+    uint16_t pulse[] = {H, L, H, L, H, L, L, H, L, H, L, H, L}; // extended suppressed -> +++---
+    //uint16_t pulse[] = {H, L, H, L, H, L, H, L, L, H, L, H}; // normal suppressed 2 -> ++++--
+    //uint16_t pulse[] = {H, L, H, L, L, H, H, L}; // barker-code 4.1 -> ++-+
+    //uint16_t pulse[] = {H, L, H, L, H, L, H, L, L, H, L, H, H, L, H, L}; // long barker-code 4.1 -> ++++--++
+    //uint16_t pulse[] = {H, L, H, L, H, L, L, H, L}; // barker-code 4.2 -> +++-
+    //uint16_t pulse[] = {H, L, H, L, H, L, L, H, L, H,  H, L, L, H, L}; // barker-code 7 -> +++--+-
+~~~
+
+The best result I can get is the `extended-suppressed` which send `3` positive pulses followed by `3` negative pulses. 
+This is also the barker-code 2 with modulation frequency at `13.3kHz`. 
+
+It might be the limitation of drivers and transducers which cannot allow higher modulation frequency. 
+
+![](figures/anemometer_excitation.png)
+
 
 #### Locating the echo - Peak matching
 
@@ -278,6 +297,11 @@ As you might notice, we only capture a few peaks around the main peak which is t
 But sometimes the maximum might might not be the main peak due to environmental noise or turbulance. 
 So simply capture the maximum peak to locate the beam does not works. 
 
+The accuracy of matching the signal can be as high as the resolution of time in the ADC sampling period, i.e. `~1us @ 1Msps`.
+
+This is by now the most unstable part because the inference from the driver affects the detection of the echo.
+Result in sometimes this method will fail and the detection offset by one period, `25us`. 
+
 In practice, there are around `1` in `50` misaligned peak measurement in my silence living room and `1` in `5` while next to the TV. 
 After the MSE, most of them can be corrected; in a 12 hour measurement, 'only' `340` in `43200`, `0.7%` error rate. 
 But this is not the end, a further correction is to use the sound speed calculated from the `dt`.
@@ -294,10 +318,10 @@ This method requires a stable zeroing of the raw signal which performed in the f
 These offset for each channel were calibrated during the power-up, by measuring and averaging the signal without sending excitation. 
 It takes around `1` second.
 
-Because all `4` channels shared the only `1` amplifier, they also share the minor bias if there is any so that will be cancelled out. 
-The actual zero offsets of each channel are all at around `2047~2048`, very stable and accurate.  
+Because all `4` channels shared the same amplifier, they also share the minor bias if there is any so that will be cancelled out. 
+The actual zero offsets of each channel are all at around `2046~2047`, very stable and accurate.  
 
-Besides, during a calm wind, collect a set of zero-crossing as the baseline of zero wind speed reference. 
+During a calm wind, collect a set of zero-crossing as the baseline of zero wind speed reference. 
 
 For each channel, we interpolate `6` zero-crossing points around the maximum amplitude of each echo.
 As the waves around peaks are the most identical. 
@@ -306,7 +330,8 @@ There is no need to compare all the zero-crossing moment as I found out thier av
 
 These result in a pretty stable sub-digit accuracy, at least in calm wind. 
 A simple test results shows the raw measurements in a standard error at `0.037us`, when converting to windspeed is `0.051m/s`.
-Better accuracy can be achieved by averaging the measurement.
+Better accuracy can be achieved by averaging the a few measurements. 
+Measurement rate and oversampling can be set through the configuration file same as other. 
 This level of accuracy that a simple processing can provide is already very promising!
 
 #### Pulse compression
@@ -318,12 +343,22 @@ But it requires much more CPU time since it is basically a signal correlation (s
 If it is needed, quantisation to `8/16bit` fixed-point then use Neural Network acceleration core will help the speed.
 
 In a rough test, for bark-code 4.1 `+++-`, the MCU tooks `46ms` to compute all 4 channels (correlation of `100 x 1000`).  
-The load is ok, compared to the *peak match* method, which only take `6ms`, it takes too much time. 
-I didn't test a correlation between 2 channels, e.g. North vs. South, 
-which will leand to `1000*1000` maximum, `10` times of the trial. 
-Of course, it is not necessary to make the full correlation, a `300 x 300` windows for both signal should be enough. 
-which should take around `50ms` per pair of channel. It can be as a backup to the *peak match* method. 
+The load is ok, compared to the *peak matching* method, which only take `6ms`, it is still taking too much time. 
+I didn't test a full correlation between 2 channels, e.g. North vs. South, 
+which will leand to `1000*1000` maximum, `10` times complexity of the trial. 
+Of course, it is not necessary to make the full correlation, I did test a `300 x 300` windows for both signal. 
+It takes around `40ms` per pair of channel. 
 
+I am not sure what is wrong that the side sidelobes are still quite large after correlation. Not better than the raw signal.
+The inverted signal (-) only degrade the peak a little bit, which should suppressed or inverted. 
+- The modulation frequency is too high that the transducer cannot handle. I try 40kHz and 20kHz, not much different. 
+- Or the way I process is wrong. 
+
+The major difference between Lau's trasducer and my transducer is the packaging materials.
+The one I used is aluminium while the one he use is plastic. 
+Another protential issue is the driving voltage, my one only have `10.5Vpp` but Lau's is higher through a transformer(unkown).  
+
+Maybe just leave it by now. 
 
 #### Extracting wind speed
 
@@ -333,6 +368,19 @@ Once the propagation time in all `4` channels, we can calculate the windspeed us
 The wind direction can also be inferred from the perpendicular pairs.
 
 Besides, we can also extract the current calm wind speed directly instead of estimating it from atmospheric pressure and temperature. 
+
+Or in C language
+~~~
+// sound speed
+ns_c = height / sin_a * (1.0f/dt[NORTH] + 1.0f/dt[SOUTH]);
+ew_c = height / sin_a * (1.0f/dt[EAST] + 1.0f/dt[WEST]);
+c = (ns_c + ew_c)/2;
+~~~
+
+A overnight calm wind measurement shows the measurement and temperature estimation are quite matching.
+The temperature range for the below measurement is `20.4DegC` to `25.6DegC`.
+
+![](figures/anemometer_speed_of_sound.png)
 
 #### Error detection and correction
 Due to the low-power requirment, I did not implement any filter to detect the final results. 
@@ -347,10 +395,10 @@ A demo is shown below. A dynamic MSE and final threshold.
 
 ![](figures/anemometer_mse_threshold.png)
 
-**Misaligned Beam**
+**Sound speed safegard**
 
-There are a final safegard that can be used to detect the errors, that is, the wind speed calculated from the `dt`. 
-Wind speed is pretty stable and can be estimated from the temperature measured by other sensors. 
+There are a final safegard that can be used to detect the errors, that is, the sound speed calculated from the `dt`. 
+The sound speed is pretty stable and can be estimated from the temperature measured by other sensors. 
 The difference between windspeed estimated by temperature and estimated by `dt` is smaller than `1<m/s`. 
 The difference threshold set here is `5m/s`.
 
