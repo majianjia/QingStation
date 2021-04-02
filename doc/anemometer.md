@@ -318,7 +318,7 @@ But it requires much more CPU time since it is basically a signal correlation (s
 If it is needed, quantisation to `8/16bit` fixed-point then use Neural Network acceleration core will help the speed.
 
 In a rough test, for bark-code 4.1 `+++-`, the MCU tooks `46ms` to compute all 4 channels (correlation of `100 x 1000`).  
-The load is ok, compared to the *peak match* method, which only take `6m1s, it takes too much time. 
+The load is ok, compared to the *peak match* method, which only take `6ms`, it takes too much time. 
 I didn't test a correlation between 2 channels, e.g. North vs. South, 
 which will leand to `1000*1000` maximum, `10` times of the trial. 
 Of course, it is not necessary to make the full correlation, a `300 x 300` windows for both signal should be enough. 
