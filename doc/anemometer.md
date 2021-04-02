@@ -256,19 +256,33 @@ The accuracy of matching the signal can be as high as the resolution of time in 
 This is by now the most unstable part because the inference from the driver affects the detection of the echo.
 Result in sometimes this method will fail and the detection offset by one period, `25us`. 
 
-#### Pulse compression
-Pulse compression is very commonly implemented
-If the above accuracy is not enough. I will implement a coded excitation using bark-code. 
-It is fairly straight forward to perform a matched filter (pulse compression). 
-But it requires much more CPU time since it is basically a signal correlation (same as a convolution in machine learning).
-If it is needed, quantisation to `8/16bit` fixed-point then use Neural Network acceleration core will help the speed.
+#### Locating the echo - Peak matching
 
-In a rough test, for bark-code 4.1 `+++-`, the MCU tooks `46ms` to compute all 4 channels (correlation of `100 x 1000`).  
-The load is ok, compared to the *peak match* method, which only take `6m1s, it takes too much time. 
-I didn't test a correlation between 2 channels, e.g. North vs. South, 
-which will leand to `1000*1000` maximum, `10` times of the trial. 
-Of course, it is not necessary to make the full correlation, a `300 x 300` windows for both signal should be enough. 
-which should take around `50ms`. It can be as a backup to the *peak match* method. 
+We need to measure the time of sound beam propagating though the path. 
+So that we need to recognize the beam in some ways and measure the time `dt` it within the measurement. 
+
+Here, the `dt` is measure in 2 steps. 
+- Peak Matching - measure a rough position of the beam, accuracy is half period, `12.5us`. 
+- Zero-Crossing - improve the accuracy to sub-digit (`<1us`)
+
+The method I implemented first is called **Peak Matching**. 
+First, we locate the maximum value as the main peak of the beam. 
+Then we detect the turning point of a few peaks before and after the main peak.
+We store both positive peak and negative peaks (valleys) with their index and value. 
+
+In the searching stage, we slide the newly measured peaks with a previously collected reference peaks (calibration) and do a set of Mean Square Error (MSE) based on each peak difference.
+Then we can use the minimum MSE to match the offset if there is any.
+The search range is `9` or `+-4`, we also count valleys so the actual ranges is `2` peaks before the maximum and `2` peaks after the maximum.
+
+As you might notice, we only capture a few peaks around the main peak which is the maximum. 
+But sometimes the maximum might might not be the main peak due to environmental noise or turbulance. 
+So simply capture the maximum peak to locate the beam does not works. 
+
+In practice, there are around `1` in `50` misaligned peak measurement in my silence living room and `1` in `5` while next to the TV. 
+After the MSE, most of them can be corrected; in a 12 hour measurement, 'only' `340` in `43200`, `0.7%` error rate. 
+But this is not the end, a further correction is to use the sound speed calculated from the `dt`.
+If the sound speed is hugely different from the sound speed estimated from temperature, then this `dt` measurement will be wrong. 
+Once we detect the error, we make another measurement immediately.  
 
 
 #### Zero-Crossing detection and interpolation
@@ -276,7 +290,7 @@ To further improve the resolution to sub digit of ADC sampling period, i.e. `<1u
 we can use an interpolated zero-crossing moment to increase the resolution.
 This method is also suggested by [Lau's blog](https://www.dl1glh.de/ultrasonic-anemometer.html#advancement). 
 
-This method requires a very stable zeroing of the raw signal which performed in the first step, preprocessing. 
+This method requires a stable zeroing of the raw signal which performed in the first step, preprocessing. 
 These offset for each channel were calibrated during the power-up, by measuring and averaging the signal without sending excitation. 
 It takes around `1` second.
 
@@ -288,11 +302,28 @@ Besides, during a calm wind, collect a set of zero-crossing as the baseline of z
 For each channel, we interpolate `6` zero-crossing points around the maximum amplitude of each echo.
 As the waves around peaks are the most identical. 
 These zero crossing are averaged and produce one number, which represent the location of these crossing. 
-There is no need to compare all the zero-crossing moment as I found out these zero-crossing are very stable. 
+There is no need to compare all the zero-crossing moment as I found out thier averages are very stable. 
 
-This result in a pretty stable sub-digit accuracy, at least in calm wind. 
-A simple test results in a standard error at `0.037us`, when converting to windspeed is `0.051m/s`.
+These result in a pretty stable sub-digit accuracy, at least in calm wind. 
+A simple test results shows the raw measurements in a standard error at `0.037us`, when converting to windspeed is `0.051m/s`.
+Better accuracy can be achieved by averaging the measurement.
 This level of accuracy that a simple processing can provide is already very promising!
+
+#### Pulse compression
+Pulse compression is very commonly implemented for radar system, Lau's works is also using it but I am not sure how he use it. 
+If the above accuracy is not enough. I will implement a coded excitation using bark-code. 
+
+It is fairly straight forward to perform a matched filter (pulse compression). 
+But it requires much more CPU time since it is basically a signal correlation (same as a convolution in machine learning).
+If it is needed, quantisation to `8/16bit` fixed-point then use Neural Network acceleration core will help the speed.
+
+In a rough test, for bark-code 4.1 `+++-`, the MCU tooks `46ms` to compute all 4 channels (correlation of `100 x 1000`).  
+The load is ok, compared to the *peak match* method, which only take `6m1s, it takes too much time. 
+I didn't test a correlation between 2 channels, e.g. North vs. South, 
+which will leand to `1000*1000` maximum, `10` times of the trial. 
+Of course, it is not necessary to make the full correlation, a `300 x 300` windows for both signal should be enough. 
+which should take around `50ms` per pair of channel. It can be as a backup to the *peak match* method. 
+
 
 #### Extracting wind speed
 
@@ -302,6 +333,28 @@ Once the propagation time in all `4` channels, we can calculate the windspeed us
 The wind direction can also be inferred from the perpendicular pairs.
 
 Besides, we can also extract the current calm wind speed directly instead of estimating it from atmospheric pressure and temperature. 
+
+#### Error detection and correction
+Due to the low-power requirment, I did not implement any filter to detect the final results. 
+Because the difference can be huge if sampling period is set to as large as `30` seconds.
+
+**Misaligned Beam**
+
+In case of misaligned beam detection I mentioned in *peak matching*, I also calculate the history of MSE error and it is updated in a small rate at every MSE calculation. 
+A hard threshold is added to the history MSE to set a final MSE threshold. 
+This method effectively filter out around `9/10` of the misaligned cased which cannot be recoverd by MSE.
+A demo is shown below. A dynamic MSE and final threshold. 
+
+![](figures/anemometer_mse_threshold.png)
+
+**Misaligned Beam**
+
+There are a final safegard that can be used to detect the errors, that is, the wind speed calculated from the `dt`. 
+Wind speed is pretty stable and can be estimated from the temperature measured by other sensors. 
+The difference between windspeed estimated by temperature and estimated by `dt` is smaller than `1<m/s`. 
+The difference threshold set here is `5m/s`.
+
+If any of the above error is detected in any channel, the current measurement will be dropped and a new measurement will be performed immediately. 
 
 ## Calibration
 
