@@ -66,7 +66,7 @@ I brought a few different parts from taobao for testing, they are:
 
 The first three with part number have similar parameters as below. 
 
-- Transmition sound pressure `10V(0dB=0.02mPa) ≥106dB`
+- Sound pressure `10V(0dB=0.02mPa) ≥106dB`
 - Receive sensitive at `40KHz (0dB=V/ubar)：≥-75dB`
 - Capacitive are all at a few `nF` depended on their diameter. 
 
@@ -75,9 +75,9 @@ I did not test the HC-SR04 because they are much larger than the `10mm` ones.
 The final decision is the first one, `40kHz 10mm` waterproof transducer(P/N: EU10AIF40H07T/R).
 The size of it is small, which helps to reduce the overall assembly size. 
 It is inexpensive compared to the `200kHz` version (4 times the cost). 
-High frequency can bring shorter pulse but thoes `40kHz` already good enough. 
-It has a wide spreading directivity(less than `-3dB @ 30degree`), which means that I dont need to fix it at an angle to the plate as Lau did.
-Everythings laying down flat simplify the mechanical design and assembly process.
+High frequency can bring shorter pulses but those `40kHz` already good enough. 
+It has a wide-spreading directivity(less than `-3dB @ 30degree`), which means that I don't need to fix it at an angle to the plate as Lau did.
+Everything laying down flat simplifies the mechanical design and assembly process.
 
 About frequency selection:
 > Ideally, the pulses should as short as possible.
@@ -88,7 +88,7 @@ About frequency selection:
 > `f=200k, λ=1.68mm` pulse width `6.72mm` 
 >
 > Both are smaller than the Height (`5cm`). 
-> Shorter wavelenght always better, however, signal signal also degrade faster through propagation.
+> Shorter wavelength always better, however, the signal also degrade faster through propagation.
 > Also, higher frequencies have different requirements on the materials of the reflective plate. 
 
 The only concern left is whether the signal pules is short enough 
@@ -99,30 +99,30 @@ I didn't consider the muRata `MA40E8-2` which was used in Lau's blog because the
 #### Driver design
 Driver design is a tricky part. A lot of pains here. 
 
-For size and low-power consideration, I did not use a conventional mosfet driver + transformer to drive the transducer. 
+For size and low-power consideration, I did not use a conventional MOSFET driver + transformer to drive the transducer. 
 Instead, like the old-style HC-SR04, I decided to use RS-232 interface drivers (such as MAX3232) to generate RS-232 levels 
 (`-5.5V` for `1` and `+5.5V` for `0`) square wave. 
-It should more or less provide at lease `10Vpp` signal to drive the transducer. 
+It should more or less provide at least `10Vpp` signal to drive the transducer. 
 Those 3V variances run on a 3V power supply so all the ICs and sensors can run on the single power rail. 
 
 These RS-232 chips have many alternatives, the driving capability is good enough for the transducers (a few `kohm` and a `few nF` in parallel). 
 The one used here is MAX3222, it provides a shutdown pin that can save power compared to more often used MAX3232. 
 These chips are low-cost and packed in a small MSOP package. 
 
-However, these chips introduced a huge interference issue from driver side.
+However, these chips introduced a huge interference issue from the driver side.
 
 The MAX3222 drive the transducer through a `1uF` capacitor from one of its output channel. 
-On the receiver (transducer) side, a set of clamp diodes to ground and resistors should ensure the signal won't travel back to the driver side. 
-Also, an other set of clamp diodes place in serial to the driver capacitor should block any noise that comes from the MAX3232. But it doesn't.
+On the receiver (transducer) side, a set of clamp diodes to the ground and resistors should ensure the signal won't travel back to the driver side. 
+Also, another set of clamp diodes place in serial to the driver capacitor should block any noise that comes from the MAX3232. But it doesn't.
 
-Because the MAX3232/3222 are generating negative and positive driving voltage based on charge pump method, 
+Because the MAX3232/3222 are generating negative and positive driving voltage based on the charge pump method, 
 it is impossible to get a smooth output voltage but can only decrease the frequency of switching by increasing those capacitors. 
 
 The signal on the driving capacitor looks like this:
 
 ![](figures/max3232_driver_noise.jpg)
 
-Although after the clamp diodes, the noise is "negligible" even my oscilloscope cannot detect, but somethings still pass there. 
+Although after the clamp diodes, the noise is "negligible" even my oscilloscope cannot detect, but some things still pass there. 
 Which results in a distortion of the receiving wave.  
 
 Here is the wave without connecting transducer, when connected, the noise will be lower but still exist. 
@@ -130,16 +130,16 @@ The same channel means the driver (MAX3232) connected directly to the receiver.
 Cross channel means from the other MAX3232 by power or other unknown sources.
 ![](figures/anemometer_noise.png)
 
-Below image shows an actual signal distorted by the noise from the driver side. 
+The below image shows an actual signal distorted by the noise from the driver side. 
 The cross channel distortion is negligible, but the same channel distortion definitely affects the shape of the echo beam. 
-Notice that the signal shown here was collect before I glue the transducer to the frame, so that the signal here have a larger amplitude.
+Notice that the signal shown here was collect before I glue the transducer to the frame so that the signal here have a larger amplitude.
 When the transducers were glue to the frame, the distortion effect increased while the signal amplitude decreased.
-This will leads to some trouble in measuring the arraving time.  
+This will leads to some trouble in measuring the arrival time.  
 
 ![](figures/anemometer_signal_distorsion.png)
 
 I tried many methods including adding capacity to the MAX3232 charge-pump capacitors. 
-This helps to reduce the ripple frequency from `6.6kHz` to `~3kHz` but very little effect on reducing amplitude of the ripple. 
+This helps to reduce the ripple frequency from `6.6kHz` to `~3kHz` but very little effect on reducing the amplitude of the ripple. 
 
 Later I found the trigger of the charging pump is very simple, once the voltage reaches a recharge threshold, it switches.
 Very much like a DC/DC converter with PDM mode, low-power, but higher noise. This kind of noise cannot be eliminated.
@@ -153,20 +153,20 @@ Hopefully, it can eliminate the issues.
 
 ### Echo signal and amplifier
 
-(I rarely touch analog circuit since forever, this definitely does not help with the designing)
+(I rarely touch analog circuit since forever, this definitely does not help with the designing and debugging)
 
-When a transducer receive a echo, it generates voltage between the two electrodes.  
-The signal first passes through a `4.7k` resistor then a `100nF` capacitor to block DC signal. 
-Then, it passes through a analog switch (4052, Low Voltage version), before it finally reaches the amplifier. 
+When a transducer receives an echo, it generates a voltage between the two electrodes.  
+The signal first passes through a `4.7k` resistor then a `100nF` capacitor to block the DC signal. 
+Then, it passes through an analog switch (4052, Low Voltage version), before it finally reaches the amplifier. 
 
-Since we use a single rail power supply, the 4052 does not allow negative voltage signal to pass.
-Instead, we will charge each channle's `100nF` capacitor to the virtual ground (`1/2 Vreff`) 
+Since we use a single rail power supply, the 4052 does not allow a negative voltage signal to pass.
+Instead, we will charge each channel's `100nF` capacitor to the virtual ground (`1/2 Vreff`) 
 before we start to send the pulses and collect measurement. 
-A small waiting, `10ms`, is needed when channel switched for charging for the stabilize the voltage of the `100nF` cap.
+A small waiting, `5ms`, is needed when the channel switched for charging for stabilizing the voltage of the `100nF` cap.
 
 #### Amplifiers
 
-In the amplifier, I use the most common LMV358 dual op amp. 
+For the amplifier, I use the most common LMV358 dual op amp. 
 
 In PCB v1.0, only a single-stage amplifier is used to amplify the echo, 
 while the other one is used for generating a low impedance virtual ground. 
@@ -174,23 +174,23 @@ while the other one is used for generating a low impedance virtual ground.
 The op amp was only set to `10x`, which I cannot even see the signal in my ADC data. 
 I overestimated the signal strength.
 I tried to change the gain to `~200x` for a clearer signal. 
-However, the signal reading ranges is still too small (around `100 digits/pp` in a `12bit, 4096` ADC). 
+However, the signal reading ranges is still too small (around `100 digits/pp` in a `12bit`, `4096` ADC). 
 
-Later, until I accidently saw a tutorial on YouTube [Basics of Op Amp Gain Bandwidth Product and Slew Rate Limit](https://youtu.be/UooUGC7tNRg)
-then I realized what was wrong here. The bandwidth of LMV358 (as well as all other op amps) list in datasheet is "Unit Gain" also equal to "Gain–Bandwidth Product" 
+Later, until I accidentally saw a tutorial on YouTube [Basics of Op Amp Gain Bandwidth Product and Slew Rate Limit](https://youtu.be/UooUGC7tNRg)
+then I realized what was wrong here. The bandwidth of LMV358 (as well as all other op amps) list in the datasheet is "Unit Gain" also equal to "Gain–Bandwidth Product" 
 which does not cover the full frequency range. 
 LMV358 will only have around maximum `1MHz/40kHz = 25x` gain no matter how much I set.  
-What make things worst is I added a `22pF` capacitor to the feedback loop for a RC filter which also decrease the gain. 
+What makes things worst is I added a `22pF` capacitor to the feedback loop for an RC filter which also decreases the gain. 
 The `22pF` is equal to `180kOhm` at `40kHz`. 
 Now I know why I could not see a signal at the beginning, the final bandwidth is too small filtered out all signals. 
 
-Unfortunately, by the time I learnt the GBP parameter, PCB V1.1 fabrication and assembly are already finished and on its long way to me. 
+Unfortunately, by the time I learnt the GBP parameter, PCB V1.1 fabrication and assembly are already finished and on their long way to me. 
 In PCB v1.1, the 2 op amps are all used to amplify the echo. 
 The first stage was set to low input impedance, to help the signal to stable quicker when channel switch (charge the capacitor). 
 The 2 stages op amps also allow higher total gains while still let the `40KHz` signal pass. 
-The `22pF` was placed on the second stage op amp, which will need to be desolder when the boards arrive.  
+The `22pF` was placed on the second stage op amp, which will need to desolder when the boards arrive.  
 The virtual ground is now provided by a voltage divider and a large capacitor. 
-The new circuit looks good at lease in the simulation. 
+The new circuit looks good at least in the simulation. 
 However, in this circuit, we still cannot test the `200KHz` transducer, 
 unless I change to a high bandwidth op amp and drop plenty of the LMV358 that I brought earlier.
 
@@ -200,7 +200,11 @@ I think the small capacitor in the clamp diodes let the driver's noise passed to
 This is also approved in a simulation circuit built using EasyEDA.
 With clean power, I can still see a small amplitude noise pass through. 
 The 1N4148 cannot block the noise from the driver side completely. 
-Hopefuly this will be fixed in PCB v1.1, where I changed the MAX3232 to MAX3222 to stop the charge pump. 
+Hopefully, this will be fixed in PCB v1.1, where I changed the MAX3232 to MAX3222 to stop the charge pump. 
+
+#### PCB v1.1 Updates
+
+As for PCB v1.1, the above problem are eliminated by turning off the receiver side driver. The measurement is lying stably within a few digits during sampling. 
 
 ### Signal processing
 
@@ -210,15 +214,16 @@ Hopefuly this will be fixed in PCB v1.1, where I changed the MAX3232 to MAX3222 
 
 STM32L476's ADC is very powerful, can reach `5Msps` sample rate.
 Here I set the sample rate to `1MHz`. I did not configure it to higher because it is not necessary:
+
 - LMV358 only have `1MHz` GBP.
-- Event `5Msps` does not bring significant improvment in resolution. 
+- Event `5Msps` does not bring significant improvement in resolution. 
 - Sub resolution accuracy can be achieved by linear interpolation (details in signal processing section). 
 
-At each burst, the ADC samples for `1ms`, which collectss exactly `1000` samples. A DMA is used to release the CPU load. 
+At each burst, the ADC samples for `1ms`, which collects exactly `1000` samples. A DMA is used to release the CPU load. 
 It is enough for Height in the range of `4cm` to `10cm`.
 
 When does the first echo arrive, and how long does the ADC need to sample?
-> Assemue Height(H)=`5cm`, Pitch(D)=`4cm`, Sound speed(C)=`336m/s`
+> Assume that Height(H)=`5cm`, Pitch(D)=`4cm`, Sound speed(C)=`336m/s`
 >
 > The distance that the sound travel is `S = sqrt((D/2)^2 + H^2) * 2 = 10.7cm`. 
 >
@@ -236,22 +241,22 @@ The signal output from the amplifier stage has been biased to `1/2 Vreff`, where
 So when there is no signal, the signal output should sit around `4095/2 = 2047.5`.
 
 In the preprocessing stage, 
-- ADC measurement are brought back to zero and converted to floating-point. 
-- A bandpass filter are applied to the signal. 
+- ADC samples are brought back to zero and converted to floating-point. 
+- A bandpass filter. 
 - Finally normalized to the maximum at `1`.
 
-Later I found out a digital filter can effectively reduce inference that cause by enviromental inferences. 
+Later I found out a digital filter can effectively reduce inference that causes by environmental inferences. 
 So I came back and add a digital filter to the raw signals. 
-A band pass butterworth is used here, with `2` bandwidths, `2kHz or 10kHz` around `40kHz` carrier frequency. 
+A bandpass Butterworth is used here, with `2` bandwidths, `2kHz` or `10kHz` around `40kHz` carrier frequency. 
 
 The below image shows the `10` kHz BW version. 
-Any order over `4th` is already unstable while only using signal percision float calculation (not showing). 
-A `2nd` order is used in here but can be changed to `1st` if it is still not stable in later test. 
+Any order over `4th` is already unstable while only using signal-precision float calculation. 
+A `1st` order `10kHz` BW is used here for maximum stability. 
 
 ![](figures/anemometer_digital_filter_response.png)
 
-The filter types is IIR, which I don't really like to use here as the phase delay is playing a very important role.
-Will see if we need to use a FIR filter, which with a constant phase delay across all frequencies. 
+The filter types are IIR, which I don't really like to use here as the phase delay is playing a very important role.
+We will see if we need to use an FIR filter, which with a constant phase delay across all frequencies. 
 
 #### Echo pulse
 
@@ -262,7 +267,7 @@ Here is the first echo recorded by my oscilloscope. The excitation length is `4`
 ![](figures/first_pulse_received.jpg)
 
 You can see that there are plenty of pulses instead of `4` which we sent. 
-The envelope of the echo is very beautiful diamond shape. We can use the shape to measure a rough propagating time. 
+The envelope of the echo is a very beautiful diamond shape. We can use the shape to measure a rough propagating time. 
 Or we can simply use the maximum magnitude to measure it if the signal is not distorted as mentioned in driver sections. 
 
 In the practice, I tried a few different excitations, including bark-coded as suggested by Lau. 
@@ -286,17 +291,17 @@ In the practice, I tried a few different excitations, including bark-coded as su
     uint32_t pulse_len = sizeof(pulse) / sizeof(uint16_t);
 ~~~
 
-The best result I can get is the `extended-suppressed` which send `3` positive pulses followed by `3` negative pulses. 
-This is also the barker-code 2 with modulation frequency at `13.3kHz`. Others do not help beside flatten the signals. 
+The best result I can get is the `extended-suppressed` from the above list, which sends `3` positive pulses followed by `3` negative pulses. 
+This is also the barker-code 2 with modulation frequency at `13.3kHz`. Others do not help besides flattening the signals. 
 
-It might be the limitation of drivers and transducers which cannot allow higher modulation frequency. 
+The reasons might be the limitation of drivers and transducers which does not allow higher modulation frequency. 
 
 ![](figures/anemometer_excitation.png)
 
 
 #### Locating the echo - Peak matching
 
-We need to measure the time of sound beam propagating though the path. 
+We need to measure the time of the sound beam propagating through the path. 
 So that we need to recognize the beam in some ways and measure the time `dt` it within the measurement. 
 
 Here, the `dt` is measure in 2 steps. 
@@ -308,79 +313,86 @@ First, we locate the maximum value as the main peak of the beam.
 Then we detect the turning point of a few peaks before and after the main peak.
 We store both positive peak and negative peaks (valleys) with their index and value. 
 
-In the searching stage, we slide the newly measured peaks with a previously collected reference peaks (calibration) and do a set of Mean Square Error (MSE) based on each peak difference.
+In the searching stage, we slide the newly measured peaks with previously collected reference peaks (calibration) and do a set of Mean Square Error (MSE) based on each peak difference.
 Then we can use the minimum MSE to match the offset if there is any.
-The search range is `9` or `+-4`, we also count valleys so the actual ranges is `2` peaks before the maximum and `2` peaks after the maximum.
+The search range is `9` or `+-4`; as we also count the valleys, the actual ranges is `2` peaks before the maximum and `2` peaks after the maximum.
 
 As you might notice, we only capture a few peaks around the main peak which is the maximum. 
-But sometimes the maximum might might not be the main peak due to environmental noise or turbulance. 
-So simply capture the maximum peak to locate the beam does not works. 
+But sometimes the maximum might not be the main peak due to environmental noise or turbulences. 
+So simply capture the maximum peak to locate the beam does not work. 
 
 The accuracy of matching the signal can be as high as the resolution of time in the ADC sampling period, i.e. `~1us @ 1Msps`.
 
 This is by now the most unstable part because the inference from the driver affects the detection of the echo.
 Result in sometimes this method will fail and the detection offset by one period, `25us`. 
 
-Here shows some (50) 'faulty' signals, that dumping ADC output recorded during calm wind. The maximum peak of the signals are marked. 
+Here shows some (50) 'faulty' signals, that dumping ADC output recorded during the calm wind. The maximum peak of the signals is marked. 
 You can see there are misaligned peaks even in a perfect calm wind. 
 
 ![](figures/anemometer_misaligned_peaks.svg)
 
-In practice, there are around `1` in `50` misaligned peak measurement in my silence living room and `1` in `5` while next to the TV. 
-After the MSE, most of them can be corrected; in a 12 hour measurement, 'only' `340` in `43200`, `0.7%` error rate. 
+In practice, there are around `1` in `50` misaligned peak measurement in my silence, calm living room and `1` in `5` while next to the TV. 
+After the MSE peak matching, most of them can be corrected and can still provide good windspeed. In a 12 hour measurement, 'only' `340` in `43200`, `0.7%` error rate. 
 But this is not the end, a further correction is to use the sound speed calculated from the `dt`.
-If the sound speed is hugely different from the sound speed estimated from temperature, then this `dt` measurement will be wrong. 
+If the sound speed is hugely different from the sound speed estimated from temperature, then this `dt` measurement was wrong. 
 Once we detect the error, we make another measurement immediately.  
-
 
 #### Zero-Crossing detection and interpolation
 To further improve the resolution to sub digit of ADC sampling period, i.e. `<1us`, 
-we can use an interpolated zero-crossing moment to increase the resolution.
+we can use an interpolated zero-crossing to utilized both sampling moments and the ADC measurement values.
 This method is also suggested by [Lau's blog](https://www.dl1glh.de/ultrasonic-anemometer.html#advancement). 
+
+The resolution of zero-crossing can be extremely high. Below are a few hundred ADC raw measurements. 
+You can see that in around zero, the signal looks like a linear function, with a slope rate at around `25`. 
+This means in this particular scenarios, after the interpolation, we can produce the resolution `25` times smaller than the original `1us`, i.e. `40ns`.
+A steeper slope will bring better resolution, but the accuracy also depends on the signal distribution.  
+
+![anemometer_zero_point](figures\anemometer_zero_point.png)
 
 This method requires a stable zeroing of the raw signal which performed in the first step, preprocessing. 
 These offset for each channel were calibrated during the power-up, by measuring and averaging the signal without sending excitation. 
-It takes around `1` second.
+It takes around `1` second. Zeroing can also perform during the operation, every hour or every `1 degC` temperature changes to maximize the accuracy. 
 
 Because all `4` channels shared the same amplifier, they also share the minor bias if there is any so that will be cancelled out. 
 The actual zero offsets of each channel are all at around `2046~2047`, very stable and accurate.  
 
-During a calm wind, collect a set of zero-crossing as the baseline of zero wind speed reference. 
+In a calm wind, we can collect a set of zero-crossing as the baseline of zero wind speed reference. 
 
 For each channel, we interpolate `6` zero-crossing points around the maximum amplitude of each echo.
 As the waves around peaks are the most identical. 
-These zero crossing are averaged and produce one number, which represent the location of these crossing. 
-There is no need to compare all the zero-crossing moment as I found out thier averages are very stable. 
+These zero crossings are averaged and produce one number, which represents the location of these crossing. 
+There is no need to compare all the zero-crossing moment as I found out their averages are very stable. 
 
 These result in a pretty stable sub-digit accuracy, at least in calm wind. 
-A simple test results shows the raw measurements in a standard error at `0.037us`, when converting to windspeed is `0.051m/s`.
-Better accuracy can be achieved by averaging the a few measurements. 
-Measurement rate and oversampling can be set through the configuration file same as other. 
-This level of accuracy that a simple processing can provide is already very promising!
+A simple test result shows the raw measurements in a standard error at `0.037us`, already very close to the theoretic resolution we calculate. (equivalent to `0.051m/s`).
+Better accuracy can be achieved by averaging a few measurements. 
+Measurement rate and oversampling can be set through the configuration file same as others. 
+This level of accuracy that simple processing can provide is already very promising!
 
 #### Pulse compression
-Pulse compression is very commonly implemented for radar system, Lau's works is also using it but I am not sure how he use it. 
+Pulse compression is very commonly implemented in radar systems, Lau's works are also using it but I am not sure how he uses it. 
 If the above accuracy is not enough. I will implement a coded excitation using bark-code. 
 
 It is fairly straight forward to perform a matched filter (pulse compression). 
 But it requires much more CPU time since it is basically a signal correlation (same as a convolution in machine learning).
 If it is needed, quantisation to `8/16bit` fixed-point then use Neural Network acceleration core will help the speed.
 
-In a rough test, for bark-code 4.1 `+++-`, the MCU tooks `46ms` to compute all 4 channels (correlation of `100 x 1000`).  
-The load is ok, compared to the *peak matching* method, which only take `6ms`, it is still taking too much time. 
+In a rough test, for bark-code 4.1 `+++-`, the MCU took `46ms` to compute all 4 channels (correlation of `100 x 1000`).  
+The load is ok, but compared to the *peak matching* method, which only takes `6ms`, it is still taking too much time. 
 I didn't test a full correlation between 2 channels, e.g. North vs. South, 
-which will leand to `1000*1000` maximum, `10` times complexity of the trial. 
-Of course, it is not necessary to make the full correlation, I did test a `300 x 300` windows for both signal. 
-It takes around `40ms` per pair of channel. 
+which will lead to `1000*1000` maximum, `10` times the complexity of the trial. 
+Of course, it is not necessary to make the full correlation, I did test a `300 x 300` windows for both signals. 
+It takes around `40ms` per pair of channels. 
 
-I am not sure what is wrong that the side sidelobes are still quite large after correlation. Not better than the raw signal.
-The inverted signal (-) only degrade the peak a little bit, which should suppressed or inverted. 
+I am not sure what is wrong that the side sidelobes are still quite large after the correlation. Not better than the raw signal.
+The inverted signal (-) only degrade the peak a little bit, which should be suppressed or inverted. 
+
 - The modulation frequency is too high that the transducer cannot handle. I try 40kHz and 20kHz, not much different. 
 - Or the way I process is wrong. 
 
-The major difference between Lau's trasducer and my transducer is the packaging materials.
-The one I used is aluminium while the one he use is plastic. 
-Another protential issue is the driving voltage, my one only have `10.5Vpp` but Lau's is higher through a transformer(unkown).  
+The major difference between Lau's transducer and my transducer is the packaging materials.
+The one I used is aluminium while the one he uses is plastic. 
+Another potential issue is the driving voltage, my one only have `10.5Vpp` but Lau's is higher through a transformer(unknown).  
 
 Maybe just leave it by now. 
 
@@ -391,7 +403,7 @@ Once the propagation time in all `4` channels, we can calculate the windspeed us
 
 The wind direction can also be inferred from the perpendicular pairs.
 
-Besides, we can also extract the current calm wind speed directly instead of estimating it from atmospheric pressure and temperature. 
+Besides, we can also extract the current sound speed directly instead of estimating it from atmospheric pressure and temperature. 
 
 Or in C language
 ~~~
@@ -401,60 +413,60 @@ ew_c = height / sin_a * (1.0f/dt[EAST] + 1.0f/dt[WEST]);
 c = (ns_c + ew_c)/2;
 ~~~
 
-A overnight calm wind measurement shows the measurement and temperature estimation are quite matching.
+An overnight calm wind measurement shows the measurement and temperature estimation are quite matching.
 The temperature range for the below measurement is `20.4DegC` to `25.6DegC`.
 
 ![](figures/anemometer_speed_of_sound.png)
 
 #### Fault detection and correction
 
-There are many interference sources from both enviroment noise or other onboard electronics. 
-Sometimes cause the deform of the signal as I already mentioned some in the previous sections. 
+There are many interference sources from both environmental noise or other onboard electronics. 
+Sometimes cause the deform of the signal as I already mentioned in the previous sections. 
 There are indeed other hidden sources that I could not find. 
 
-Due to the low-power requirment, I did not implement any filter to detect the final results based on previous measurements. 
-Because the difference in windspeed can be huge if the device need to sleep for as long as `30` seconds.
+Due to the low-power requirement, I did not implement any filter to detect the final results based on previous measurements. 
+Because the difference in wind speed can be huge if the device needs to sleep for as long as `30` seconds.
 
 **Misaligned Beam**
 
-In case of misaligned beam detection I mentioned in *peak matching*, I also calculate the history of MSE error and it is updated in a small rate at every MSE calculation. 
+In the case of misaligned beam detection I mentioned in *peak matching*, I also calculate the history of MSE error and it is updated at a small rate at every MSE calculation. 
 A hard threshold is added to the history MSE to set a final MSE threshold. 
-This method effectively filter out around `9/10` of the misaligned cased which cannot be recoverd by MSE.
+This method effectively filters out around `9/10` of the misaligned cases which cannot be recovered by MSE.
 A demo is shown below. A dynamic MSE and final threshold. 
 
 ![](figures/anemometer_mse_threshold.png)
 
-**Sound speed safegard**
+**Sound speed safeguard**
 
-There are a final safegard that can be used to detect the errors, that is, the sound speed calculated from the `dt`. 
+There is a final safeguard that can be used to detect the errors, that is, the sound speed calculated from the `dt`. 
 The sound speed is pretty stable and can be estimated from the temperature measured by other sensors. 
-The difference between windspeed estimated by temperature and estimated by `dt` is smaller than `1<m/s`. 
+The difference between wind speed estimated by temperature and estimated by `dt` is smaller than `1<m/s`. 
 The difference threshold set here is `5m/s`.
 
 If any of the above error is detected in any channel, the current measurement will be dropped and a new measurement will be performed immediately. 
 
 #### Timing
 
-For each channel, measurement will start with switching analog signals paths and enable the dedicated driver.
-Then we wait `5` ms to let the signal path stable and let the driver to charge to its boosting voltage (`<150us`).
+For each channel, the measurement will start with switching analog signals paths and enable the dedicated driver.
+Then we wait `5ms`  to let the signal path stable and let the driver charges to its boosting voltage (`<150us`).
 
-Then the coded pulse are send to Timer via a DMA channel to generate ultrasonic waves. 
-At the same time, the timer also trigger the ADC to start sampling. 
+Then the coded pulses are sent to Timer via a DMA channel to generate ultrasonic waves. 
+At the same time, the timer also triggers the ADC to start sampling. 
 Another DMA channel is responsible to collect all measurement. 
-This takes another `1` ms to finish  
+This takes another `1ms` to finish  
 
-In total, sampling all channels takes `25` ms.
+In total, sampling all channels take `25ms` .
 
-Once all `4` channels of data is ready, then the processing mentioned in above sections are perform. 
+Once all `4` channels of data are ready, then the processing mentioned in the above sections are performed. 
 The whole processing takes `19`ms. 
 
 
 The measurement and processing time is shorter than I expected. 
 Thanks to the `peak matching` method which is relatively less computational expensive compared to the correlation method. 
 
-The result is very satisfied as a less than `50ms` allows MCU and anlog circuit to sleep more. 
+Overall, I really satisfied with the processing time as less than `50ms` allows MCU and analog circuit to sleep more. 
 It also left more room once a fault is detected then can take a few more samples to correct the measurement. 
-Or, when power consumption is not a case, can oversampling up to `20` times in a second for better . 
+Or, when power consumption is not a case, can oversampling up to `20` times in a second for better. 
 
 ## Calibration
 TBD
