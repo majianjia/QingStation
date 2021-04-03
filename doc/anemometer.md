@@ -234,10 +234,24 @@ all CPU interrupts are halted using RT-Thread's API between the start of excitat
 
 The signal output from the amplifier stage has been biased to `1/2 Vreff`, where Vreff is equal to MCU's Vdd `3.3V`.
 So when there is no signal, the signal output should sit around `4095/2 = 2047.5`.
-Since the op amp bandwidth is already low, no extra low-pass filter or oversampling is needed.
 
-In the preprocessing stage, signals are brought back to zero and converted to floating-point. 
-They are also normalized to the maximum at `1`.
+In the preprocessing stage, 
+- ADC measurement are brought back to zero and converted to floating-point. 
+- A bandpass filter are applied to the signal. 
+- Finally normalized to the maximum at `1`.
+
+Later I found out a digital filter can effectively reduce inference that cause by enviromental inferences. 
+So I came back and add a digital filter to the raw signals. 
+A band pass butterworth is used here, with `2` bandwidths, `2kHz or 10kHz` around `40kHz` carrier frequency. 
+
+The below image shows the `10` kHz BW version. 
+Any order over `4th` is already unstable while only using signal percision float calculation (not showing). 
+A `2nd` order is used in here but can be changed to `1st` if it is still not stable in later test. 
+
+![](figures/anemometer_digital_filter_response.png)
+
+The filter types is IIR, which I don't really like to use here as the phase delay is playing a very important role.
+Will see if we need to use a FIR filter, which with a constant phase delay across all frequencies. 
 
 #### Echo pulse
 
@@ -257,18 +271,23 @@ In the practice, I tried a few different excitations, including bark-coded as su
     //uint16_t pulse[] = {50, 50, 50, 50};
 
     // Double rate (80k), to control the +1 or −1 phase
-    //uint16_t pulse[] = {H, L, H, L, H, L, H, L}; // normal -> ++++
-    //uint16_t pulse[] = {H, L, H, L, H, L, L, H, L, H}; // normal suppressed -> +++--
-    uint16_t pulse[] = {H, L, H, L, H, L, L, H, L, H, L, H, L}; // extended suppressed -> +++---
-    //uint16_t pulse[] = {H, L, H, L, H, L, H, L, L, H, L, H}; // normal suppressed 2 -> ++++--
-    //uint16_t pulse[] = {H, L, H, L, L, H, H, L}; // barker-code 4.1 -> ++-+
-    //uint16_t pulse[] = {H, L, H, L, H, L, H, L, L, H, L, H, H, L, H, L}; // long barker-code 4.1 -> ++++--++
-    //uint16_t pulse[] = {H, L, H, L, H, L, L, H, L}; // barker-code 4.2 -> +++-
-    //uint16_t pulse[] = {H, L, H, L, H, L, L, H, L, H,  H, L, L, H, L}; // barker-code 7 -> +++--+-
+    // this is a bit tricky -- this is the only way to make it work.
+    // STM32's timer seems to require the first cycle not to be 100% width.
+    // So there is a dummy 'L' in each pulse, as well as a dummy 'L' in each end if the end is not L.
+    // A +1 is 'H, L'.  A -1 is 'L, H'
+    //uint16_t pulse[] = {L, H, L, H, L, H, L, H, L}; // normal -> ++++
+    //uint16_t pulse[] = {L, H, L, H, L, H, L, L, H, L, H, L}; // normal suppressed -> +++--
+    uint16_t pulse[] = {L, H, L, H, L, H, L, L, H, L, H, L, H, L}; // extended suppressed -> +++---
+    //uint16_t pulse[] = {L, H, L, H, L, H, L, H, L, L, H, L, H, L}; // normal suppressed 2 -> ++++--
+    //uint16_t pulse[] = {L, H, L, H, L, L, H, H, L}; // barker-code 4.1 -> ++-+
+    //uint16_t pulse[] = {L, H, L, H, L, H, L, H, L, L, H, L, H, H, L, H, L}; // long barker-code 4.1 -> ++++--++
+    //uint16_t pulse[] = {L, H, L, H, L, H, L, L, H, L}; // barker-code 4.2 -> +++-
+    //uint16_t pulse[] = {L, H, L, H, L, H, L, L, H, L, H,  H, L, L, H, L}; // barker-code 7 -> +++--+-
+    uint32_t pulse_len = sizeof(pulse) / sizeof(uint16_t);
 ~~~
 
 The best result I can get is the `extended-suppressed` which send `3` positive pulses followed by `3` negative pulses. 
-This is also the barker-code 2 with modulation frequency at `13.3kHz`. 
+This is also the barker-code 2 with modulation frequency at `13.3kHz`. Others do not help beside flatten the signals. 
 
 It might be the limitation of drivers and transducers which cannot allow higher modulation frequency. 
 
@@ -301,6 +320,11 @@ The accuracy of matching the signal can be as high as the resolution of time in 
 
 This is by now the most unstable part because the inference from the driver affects the detection of the echo.
 Result in sometimes this method will fail and the detection offset by one period, `25us`. 
+
+Here shows some (50) 'faulty' signals, that dumping ADC output recorded during calm wind. The maximum peak of the signals are marked. 
+You can see there are misaligned peaks even in a perfect calm wind. 
+
+![](figures/anemometer_misaligned_peaks.svg)
 
 In practice, there are around `1` in `50` misaligned peak measurement in my silence living room and `1` in `5` while next to the TV. 
 After the MSE, most of them can be corrected; in a 12 hour measurement, 'only' `340` in `43200`, `0.7%` error rate. 
@@ -382,9 +406,14 @@ The temperature range for the below measurement is `20.4DegC` to `25.6DegC`.
 
 ![](figures/anemometer_speed_of_sound.png)
 
-#### Error detection and correction
-Due to the low-power requirment, I did not implement any filter to detect the final results. 
-Because the difference can be huge if sampling period is set to as large as `30` seconds.
+#### Fault detection and correction
+
+There are many interference sources from both enviroment noise or other onboard electronics. 
+Sometimes cause the deform of the signal as I already mentioned some in the previous sections. 
+There are indeed other hidden sources that I could not find. 
+
+Due to the low-power requirment, I did not implement any filter to detect the final results based on previous measurements. 
+Because the difference in windspeed can be huge if the device need to sleep for as long as `30` seconds.
 
 **Misaligned Beam**
 
@@ -404,8 +433,31 @@ The difference threshold set here is `5m/s`.
 
 If any of the above error is detected in any channel, the current measurement will be dropped and a new measurement will be performed immediately. 
 
-## Calibration
+#### Timing
 
+For each channel, measurement will start with switching analog signals paths and enable the dedicated driver.
+Then we wait `5` ms to let the signal path stable and let the driver to charge to its boosting voltage (`<150us`).
+
+Then the coded pulse are send to Timer via a DMA channel to generate ultrasonic waves. 
+At the same time, the timer also trigger the ADC to start sampling. 
+Another DMA channel is responsible to collect all measurement. 
+This takes another `1` ms to finish  
+
+In total, sampling all channels takes `25` ms.
+
+Once all `4` channels of data is ready, then the processing mentioned in above sections are perform. 
+The whole processing takes `19`ms. 
+
+
+The measurement and processing time is shorter than I expected. 
+Thanks to the `peak matching` method which is relatively less computational expensive compared to the correlation method. 
+
+The result is very satisfied as a less than `50ms` allows MCU and anlog circuit to sleep more. 
+It also left more room once a fault is detected then can take a few more samples to correct the measurement. 
+Or, when power consumption is not a case, can oversampling up to `20` times in a second for better . 
+
+## Calibration
+TBD
 
 
 
