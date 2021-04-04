@@ -351,12 +351,19 @@ A steeper slope will bring better resolution, but the accuracy also depends on t
 
 This method requires a stable zeroing of the raw signal which performed in the first step, preprocessing. 
 These offset for each channel were calibrated during the power-up, by measuring and averaging the signal without sending excitation. 
-It takes around `1` second. Zeroing can also perform during the operation, every hour or every `1 degC` temperature changes to maximize the accuracy. 
+It takes around `1` second. 
+Zeroing can also perform during the operation, every hour or every `1 degC` temperature changes to maximize the accuracy. 
 
 Because all `4` channels shared the same amplifier, they also share the minor bias if there is any so that will be cancelled out. 
 The actual zero offsets of each channel are all at around `2046~2047`, very stable and accurate.  
+But occasionally, there are some offset in one or all channels as the figure shows below. The east and west channel drifted up (The west also deformed quite much). 
 
-In a calm wind, we can collect a set of zero-crossing as the baseline of zero wind speed reference. 
+![anemometer_zero_offset_example](figures\anemometer_zero_offset_example.png)
+
+In a calm wind, we can collect a set of zero-crossing as the baseline of zero wind speed reference.  
+In the later measurement, to avoid the above offest issues, we use a dynamic zeroing method.
+Before each measurement start, 
+we perform a ADC measurement without excitation to get the real-time zero to eliminate the offset from power sources or other.  
 
 For each channel, we interpolate `6` zero-crossing points around the maximum amplitude of each echo.
 As the waves around peaks are the most identical. 
@@ -445,15 +452,30 @@ The difference threshold set here is `5m/s`.
 
 If any of the above error is detected in any channel, the current measurement will be dropped and a new measurement will be performed immediately. 
 
+#### Debugging
+
+To help to debug, once a fault detected, the `4` channels ADC measurement will be recorded into SD card. 
+Actually, most of the faulty figures shown in above sections are plotted from thoes dumping data. 
+
+I also wrote some script using Python and Processing3 to postprocess the data or to show realtime data. 
+They are extremely helpful. Here is a screen recording of the Processing3 script on realtime data. 
+
+![anemometer_processing3_demo](figures\anemometer_processing3_demo.gif)
+
+I would repeat what Lau has said, building the anemometer is definitely not as easy as I thought. 
+
+
 #### Timing
 
 For each channel, the measurement will start with switching analog signals paths and enable the dedicated driver.
-Then we wait `5ms`  to let the signal path stable and let the driver charges to its boosting voltage (`<150us`).
+Then we wait `4ms`  to let the signal path stable and let the driver charges to its boosting voltage (`<150us`).
+
+We perform a `idle` measurement (no excitation) to get the zero of ADC measurement, which takes `1ms`.  
 
 Then the coded pulses are sent to Timer via a DMA channel to generate ultrasonic waves. 
 At the same time, the timer also triggers the ADC to start sampling. 
 Another DMA channel is responsible to collect all measurement. 
-This takes another `1ms` to finish  
+This takes another `1ms` to finish.  
 
 In total, sampling all channels take `25ms` .
 
