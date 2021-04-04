@@ -347,7 +347,7 @@ You can see that in around zero, the signal looks like a linear function, with a
 This means in this particular scenarios, after the interpolation, we can produce the resolution `25` times smaller than the original `1us`, i.e. `40ns`.
 A steeper slope will bring better resolution, but the accuracy also depends on the signal distribution.  
 
-![anemometer_zero_point](figures\anemometer_zero_point.png)
+![](figures\anemometer_zero_point.png)
 
 This method requires a stable zeroing of the raw signal which performed in the first step, preprocessing. 
 These offset for each channel were calibrated during the power-up, by measuring and averaging the signal without sending excitation. 
@@ -358,7 +358,7 @@ Because all `4` channels shared the same amplifier, they also share the minor bi
 The actual zero offsets of each channel are all at around `2046~2047`, very stable and accurate.  
 But occasionally, there are some offset in one or all channels as the figure shows below. The east and west channel drifted up (The west also deformed quite much). 
 
-![anemometer_zero_offset_example](figures\anemometer_zero_offset_example.png)
+![](figures\anemometer_zero_offset_example.png)
 
 In a calm wind, we can collect a set of zero-crossing as the baseline of zero wind speed reference.  
 In the later measurement, to avoid the above offest issues, we use a dynamic zeroing method.
@@ -460,7 +460,7 @@ Actually, most of the faulty figures shown in above sections are plotted from th
 I also wrote some script using Python and Processing3 to postprocess the data or to show realtime data. 
 They are extremely helpful. Here is a screen recording of the Processing3 script on realtime data. 
 
-![anemometer_processing3_demo](figures\anemometer_processing3_demo.gif)
+![](figures\anemometer_processing3_demo.gif)
 
 I would repeat what Lau has said, building the anemometer is definitely not as easy as I thought. 
 
