@@ -219,7 +219,8 @@ Here I set the sample rate to `1MHz`. I did not configure it to higher because i
 - Event `5Msps` does not bring significant improvement in resolution. 
 - Sub resolution accuracy can be achieved by linear interpolation (details in signal processing section). 
 
-At each burst, the ADC samples for `1ms`, which collects exactly `1000` samples. A DMA is used to release the CPU load. 
+At each burst, the ADC samples for `1ms`, which collects exactly `1000` samples. A DMA is used to unload the CPU.
+As well as to ensure the sampling moment are not affected by other tasks.  
 It is enough for Height in the range of `4cm` to `10cm`.
 
 When does the first echo arrive, and how long does the ADC need to sample?
@@ -245,18 +246,18 @@ In the preprocessing stage,
 - A bandpass filter. 
 - Finally normalized to the maximum at `1`.
 
-Later I found out a digital filter can effectively reduce inference that causes by environmental inferences. 
-So I came back and add a digital filter to the raw signals. 
+Later I found out a digital bandpass filter can effectively reduce inference that causes by environmental inferences. 
+So I came back and add a digital filter to smooth out the signal. It helps to reduce the number of detecting faulty peaks.  
 A bandpass Butterworth is used here, with `2` bandwidths, `2kHz` or `10kHz` around `40kHz` carrier frequency. 
 
-The below image shows the `10` kHz BW version. 
-Any order over `4th` is already unstable while only using signal-precision float calculation. 
+The below image shows the `10` kHz BW filter passbands. 
+Any order over `4th` is already unstable with signal-precision float calculation. (The coefficients are converted to float32)
 A `1st` order `10kHz` BW is used here for maximum stability. 
 
 ![](figures/anemometer_digital_filter_response.png)
 
-The filter types are IIR, which I don't really like to use here as the phase delay is playing a very important role.
-We will see if we need to use an FIR filter, which with a constant phase delay across all frequencies. 
+The current filter is IIR type, which I don't really like to use here as the phase delay is playing a very important role in wind speed calculation.
+Let's see if we need to replace it with a FIR filter, which has a constant phase delay across all frequencies. 
 
 #### Echo pulse
 
@@ -270,7 +271,7 @@ You can see that there are plenty of pulses instead of `4` which we sent.
 The envelope of the echo is a very beautiful diamond shape. We can use the shape to measure a rough propagating time. 
 Or we can simply use the maximum magnitude to measure it if the signal is not distorted as mentioned in driver sections. 
 
-In the practice, I tried a few different excitations, including bark-coded as suggested by Lau. 
+In the practice, I tried a few different excitations, including barker-codes as suggested by Lau. 
 ~~~
     // single rate (40k)
     //uint16_t pulse[] = {50, 50, 50, 50};
@@ -311,7 +312,7 @@ Here, the `dt` is measure in 2 steps.
 The method I implemented first is called **Peak Matching**. 
 First, we locate the maximum value as the main peak of the beam. 
 Then we detect the turning point of a few peaks before and after the main peak.
-We store both positive peak and negative peaks (valleys) with their index and value. 
+We store both positive peak and negative peaks (valleys) with their indexes and values. 
 
 In the searching stage, we slide the newly measured peaks with previously collected reference peaks (calibration) and do a set of Mean Square Error (MSE) based on each peak difference.
 Then we can use the minimum MSE to match the offset if there is any.
@@ -326,7 +327,8 @@ The accuracy of matching the signal can be as high as the resolution of time in 
 This is by now the most unstable part because the inference from the driver affects the detection of the echo.
 Result in sometimes this method will fail and the detection offset by one period, `25us`. 
 
-Here shows some (50) 'faulty' signals, that dumping ADC output recorded during the calm wind. The maximum peak of the signals is marked. 
+Here shows some (50) 'faulty' signals; these ADC measurement are record during the calm wind but are fail to calculate (they looks good though). 
+The maximum peak of the signals is marked. 
 You can see there are misaligned peaks even in a perfect calm wind. 
 
 ![](figures/anemometer_misaligned_peaks.svg)

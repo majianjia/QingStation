@@ -50,10 +50,10 @@ For the hardware V1.1
 **Sensor Integration**:
 - Anemometer (2x2 Ultrasonic transducer array `40k/200kHz`)
 - Rain sensor (IR Optical type)
-- Lighting sensor (AS3935) *V1.1 only*
+- Lighting sensor (AS3935) 
 - IMU & eCampass (BMX160)
 - RGBI light sensor (APDS-9250)
-- Microphone (MP34DT05/6) *V1.1 only*
+- Microphone (MP34DT05/6)
 - Barometer, humidity, temperature sensor (BME280)
 
 **Communication Interfaces**:
@@ -61,9 +61,14 @@ For the hardware V1.1
 - I2C
 - SPI
 - CAN (FDCAN)
-- USB (CDC or MassStorage)
+- USB (CDC and/or MassStorage)
 
-### Functions descripton
+**Power Consumption**
+- Normal: 27~30mA
+- Normal + GNSS: 60mA
+- Sleep: unknown 
+
+### Functions description
 
 Digital sensors are used whenever it is available. 
 Today's digital sensors are easy to use as long as they are connected to I2C correctly.
@@ -76,7 +81,7 @@ For the lighting sensor (AS3935), I could not make an easy test to validate my a
 For the RGBIR sensor, we cannot calibrate the sensor using a cosine corrector which light sensor usually used. 
 I have no tools that can calibrate this sensor. 
 RGBI sensor can provide colour data than a single lumen meter. 
-  
+
 IMU and eCampass are not needed for a stationary mounted weather station. 
 But in sailing, its high mounted location is perfect for navigation where fewer inferences than in the hull (the ship's main controller). 
 
