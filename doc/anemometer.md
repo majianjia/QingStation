@@ -336,8 +336,8 @@ You can see there are misaligned peaks even in a perfect calm wind.
 In practice, there are around `1` in `50` misaligned peak measurement in my silence, calm living room and `1` in `5` while next to the TV. 
 After the MSE peak matching, most of them can be corrected and can still provide good windspeed. In a 12 hour measurement, 'only' `340` in `43200`, `0.7%` error rate. 
 But this is not the end, a further correction is to use the sound speed calculated from the `dt`.
-If the sound speed is hugely different from the sound speed estimated from temperature, then this `dt` measurement was wrong. 
-Once we detect the error, we make another measurement immediately.  
+If the sound speed is hugely different from the sound speed estimated from temperature, then this `dt` measurement must be wrong. 
+Once a error detected, we make another measurement immediately.  
 
 #### Zero-Crossing detection and interpolation
 To further improve the resolution to sub digit of ADC sampling period, i.e. `<1us`, 
@@ -345,8 +345,8 @@ we can use an interpolated zero-crossing to utilized both sampling moments and t
 This method is also suggested by [Lau's blog](https://www.dl1glh.de/ultrasonic-anemometer.html#advancement). 
 
 The resolution of zero-crossing can be extremely high. Below are a few hundred ADC raw measurements. 
-You can see that in around zero, the signal looks like a linear function, with a slope rate at around `25`. 
-This means in this particular scenarios, after the interpolation, we can produce the resolution `25` times smaller than the original `1us`, i.e. `40ns`.
+You can see that in around zero, the signal looks like a linear function, with a slope rate at around `30`. 
+This means in this particular scenarios, after the interpolation, we can produce the resolution `30` times smaller than the original `1us`, i.e. `33ns`.
 A steeper slope will bring better resolution, but the accuracy also depends on the signal distribution.  
 
 ![](figures/anemometer_zero_point.png)
@@ -356,13 +356,14 @@ These offset for each channel were calibrated during the power-up, by measuring 
 It takes around `1` second. 
 Zeroing can also perform during the operation, every hour or every `1 degC` temperature changes to maximize the accuracy. 
 
-Because all `4` channels shared the same amplifier, they also share the minor bias if there is any so that will be cancelled out. 
-The actual zero offsets of each channel are all at around `2046~2047`, very stable and accurate.  
-But occasionally, there are some offset in one or all channels as the figure shows below. The east and west channel drifted up (The west also deformed quite much). 
+Because all `4` channels shared the same amplifier, they also share the minor bias if there is any so that will be cancelled out.
+The actual zero offsets of each channel are all at around `2046~2047`, very stable and accurate.
+But occasionally, there are some offset in one or all channels as the figure shows below. The east and west channel drifted up. 
+This measurement was dumped by the fault detection.(The west also deformed quite much).
 
 ![](figures/anemometer_zero_offset_example.png)
 
-In a calm wind, we can collect a set of zero-crossing as the baseline of zero wind speed reference.  
+In the starting up,we can collect a set of zero-crossing for calm wind calibration.  
 In the later measurement, to avoid the above offest issues, we use a dynamic zeroing method.
 Before each measurement start, 
 we perform a ADC measurement without excitation to get the real-time zero to eliminate the offset from power sources or other.  
@@ -380,7 +381,7 @@ This level of accuracy that simple processing can provide is already very promis
 
 #### Pulse compression
 Pulse compression is very commonly implemented in radar systems, Lau's works are also using it but I am not sure how he uses it. 
-If the above accuracy is not enough. I will implement a coded excitation using bark-code. 
+If the *peak mathing* stability is not enough. I will try to implement a coded excitation using barker-code. 
 
 It is fairly straight forward to perform a matched filter (pulse compression). 
 But it requires much more CPU time since it is basically a signal correlation (same as a convolution in machine learning).
@@ -396,7 +397,7 @@ It takes around `40ms` per pair of channels.
 I am not sure what is wrong that the side sidelobes are still quite large after the correlation. Not better than the raw signal.
 The inverted signal (-) only degrade the peak a little bit, which should be suppressed or inverted. 
 
-- The modulation frequency is too high that the transducer cannot handle. I try 40kHz and 20kHz, not much different. 
+- The modulation frequency is too high that the transducer cannot handle. I tried `40kHz` and `20kHz`, not much different. 
 - Or the way I process is wrong. 
 
 The major difference between Lau's transducer and my transducer is the packaging materials.
@@ -405,9 +406,10 @@ Another potential issue is the driving voltage, my one only have `10.5Vpp` but L
 
 Maybe just leave it by now. 
 
-#### Extracting wind speed
+#### Extracting wind speed and sound speed
 
-Once the propagation time in all `4` channels, we can calculate the windspeed using the equations that 
+Finally, we have stable `4` channels of `dt` measurement ready, together with the mechanical parameters (height and pitch), 
+we can calculate the windspeed using the equations that 
 [Lau](https://www.dl1glh.de/ultrasonic-anemometer.html#advancement) provided. 
 
 The wind direction can also be inferred from the perpendicular pairs.
@@ -416,10 +418,18 @@ Besides, we can also extract the current sound speed directly instead of estimat
 
 Or in C language
 ~~~
+// wind speed.
+ns_v = height / (sin_a * cos_a) * (1.0f/dt[NORTH] - 1.0f/dt[SOUTH]);
+ew_v = height / (sin_a * cos_a) * (1.0f/dt[EAST] - 1.0f/dt[WEST]);
+v = sqrtf(ns_v*ns_v + ew_v*ew_v);
+
 // sound speed
 ns_c = height / sin_a * (1.0f/dt[NORTH] + 1.0f/dt[SOUTH]);
 ew_c = height / sin_a * (1.0f/dt[EAST] + 1.0f/dt[WEST]);
 c = (ns_c + ew_c)/2;
+
+// course
+course = atan2f(-ew_v, -ns_v)/3.1415926*180 + 180; 
 ~~~
 
 An overnight calm wind measurement shows the measurement and temperature estimation are quite matching.
@@ -438,9 +448,10 @@ Because the difference in wind speed can be huge if the device needs to sleep fo
 
 **Misaligned Beam**
 
-In the case of misaligned beam detection I mentioned in *peak matching*, I also calculate the history of MSE error and it is updated at a small rate at every MSE calculation. 
+In the case of misaligned beam detection I mentioned in *peak matching*, 
+I also calculate the history of MSE error and it is updated at a small rate at every MSE calculation. 
 A hard threshold is added to the history MSE to set a final MSE threshold. 
-This method effectively filters out around `9/10` of the misaligned cases which cannot be recovered by MSE.
+This method effectively filters out around `9/10` of the misaligned cases which cannot be recovered by a simple minimum MSE.
 A demo is shown below. A dynamic MSE and final threshold. 
 
 ![](figures/anemometer_mse_threshold.png)
@@ -448,9 +459,9 @@ A demo is shown below. A dynamic MSE and final threshold.
 **Sound speed safeguard**
 
 There is a final safeguard that can be used to detect the errors, that is, the sound speed calculated from the `dt`. 
-The sound speed is pretty stable and can be estimated from the temperature measured by other sensors. 
-The difference between wind speed estimated by temperature and estimated by `dt` is smaller than `1<m/s`. 
-The difference threshold set here is `5m/s`.
+The sound speed measurement is pretty stable and can be estimated from the temperature measured by other sensors. 
+The difference between wind speed estimated by temperature and estimated by `dt` is normally smaller than `2<m/s`. 
+The difference threshold is set to `5m/s`.
 
 If any of the above error is detected in any channel, the current measurement will be dropped and a new measurement will be performed immediately. 
 
@@ -459,12 +470,12 @@ If any of the above error is detected in any channel, the current measurement wi
 To help to debug, once a fault detected, the `4` channels ADC measurement will be recorded into SD card. 
 Actually, most of the faulty figures shown in above sections are plotted from thoes dumping data. 
 
-I also wrote some script using Python and Processing3 to postprocess the data or to show realtime data. 
-They are extremely helpful. Here is a screen recording of the Processing3 script on realtime data. 
+I also wrote some Python scripts to post-process the data or and some Processing3 scripts to to show realtime data. 
+They are extremely helpful. Here is a screen recording of the Processing3 scripts plotting `4` channle of realtime data. 
 
 ![](figures/anemometer_processing3_demo.gif)
 
-I would repeat what Lau has said, building the anemometer is definitely not as easy as I thought. 
+Overall, I would like to repeat what Lau has said in his blog “building the anemometer is definitely not as easy as I thought.” 
 
 
 #### Timing
@@ -479,17 +490,16 @@ At the same time, the timer also triggers the ADC to start sampling.
 Another DMA channel is responsible to collect all measurement. 
 This takes another `1ms` to finish.  
 
-In total, sampling all channels take `25ms` .
+In total, sampling all channels take `~25ms` .
 
-Once all `4` channels of data are ready, then the processing mentioned in the above sections are performed. 
-The whole processing takes `19`ms. 
-
+Once all `4` channels of data are ready, then all data processings that mentioned in the above sections are performed. 
+The whole processing takes `19`ms. So, each measurement takes `19+25=44ms`.
 
 The measurement and processing time is shorter than I expected. 
-Thanks to the `peak matching` method which is relatively less computational expensive compared to the correlation method. 
+Thanks to the *peak matching* method which is relatively less computational expensive compared to the correlation method. 
 
-Overall, I really satisfied with the processing time as less than `50ms` allows MCU and analog circuit to sleep more. 
-It also left more room once a fault is detected then can take a few more samples to correct the measurement. 
+Overall, I really satisfied with the processing time as less than `50ms` allowing the MCU and analog circuit to sleep more to save power. 
+It also left more space once a fault is detected, we still have plenty of time to take a few more samples to achive a correct the measurement. 
 Or, when power consumption is not a case, can oversampling up to `20` times in a second for better. 
 
 ## Calibration
