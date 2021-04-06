@@ -69,7 +69,7 @@ The air flow speed is set to `30m/s` equivalent to `~58knots`, near a center of 
 
 ![QingStation-CDF](figures/QingStation-CDF.png)
 
-As you can see, the air flows in between of the top and reflective plate is actually accelerated by `~3m/s`. 
+As you can see, the air flow in between of the top and reflective plate is actually accelerated by `~3m/s`. 
 No idea if we need to take them into account in later processing.  
 I don't have any access to wind tunnel, so I could not do a test in a perfect experiment environment. 
 
@@ -84,6 +84,9 @@ But the reality is a different story.
 The light-weight plastic is not a problem in Lau's works because he use a metal frames. 
 
 ![anemometer_multiple_sound_path](figures/anemometer_multiple_sound_path.png)
+
+These sound beams can be seem in the receiving signals. 
+Adding some coins as counter weight might help to reduce the magnitude of the other beams. 
 
 ### Ultrasonic transducer, driver 
 
