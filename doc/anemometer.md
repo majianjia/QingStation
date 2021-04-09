@@ -533,23 +533,23 @@ Thanks to the *peak matching* method which is relatively less computational expe
 
 Overall, I really satisfied with the processing time as less than `50ms` allowing the MCU and analog circuit to sleep more to save power. 
 It also left more space once a fault is detected, we still have plenty of time to take a few more samples to achive a correct the measurement. 
-Or, when power consumption is not a case, can oversampling up to `20` times in a second for better. 
+Or, when power consumption is not a case, can oversampling up to `20` times in a second for better accuracy. 
 
 #### Processing summary
 
 ![](figures/anemometer_windspeed_measurement.png)
 
-Using the above processing, the Anemometer can now produce quite stable measurement. 
-The above `1` hour measurement was done in one of the windy sunny afternoon. 
+By using the above processing, the Anemometer can now produce quite stable measurement. 
+The above `1` hour measurement was done in one of the windy, sunny afternoon without a single none recovereable fault.
 
 The major difficulties are:
-- Select and generate a good pulse. 
-- Locating beam is difficult, in both calibration and real-time measurement. 
-- Fault detection. When to fixed a signal and when to redo the measurement.  
+- Selecting and generating a good pulse. 
+- Locating the beam is difficult in both calibration and real-time measurement. 
+- Fault detection. Decide when to fixed a signal and when to redo the measurement.  
 
-These parts are where most of my effort going to. 
+These parts are where most of my effort was put into. 
 
-But once they were finalised, the single firmware worked easily in all `4` different hardware I built. 
+But once the process was finalised, the single firmware worked easily in all `4` different hardware I built. 
 
 
 ## Calibration
