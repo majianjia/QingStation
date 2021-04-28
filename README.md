@@ -36,6 +36,11 @@ Elevating a large mass on the mast decreases the stability of the ship.
 Today's digital sensors are easy to use. 
 We can implement plenty of them as long as we have space on the PCB. 
 
+## Building logs
+
+There are some very detailed post that recall the development:
+- [Ultrasonic Anemometer](doc/anemometer.md)
+- [Optical rain sensor](doc/rain_sensor.md)
 
 ## Features and functions
 
