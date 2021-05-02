@@ -48,17 +48,25 @@ Anyway, as long as it works, that is fine.
 
 ## Photodiodes and measurement. 
 
-Measure schmatic is shown below. 
+Measure schematic is shown below. 
 ![schmatics](figures/rain_schmatic.png)
 
 As you can see, it is very simple. A infrared LED driver and a photodiode receiver. 
 
-A typical photodiode has a reverse current at around `3~5uA`. 
-So a serial `100k` resistor is capable to provide `0.3~0.5V` dynamic ranges for ADC to measure.
+![PD204/B](figures/rain_pd204 black.png)
+
+A typical photodiode (e.g. PD204) has a reverse current at around `5~15uA`. 
+So a serial `100k` resistor is capable to provide `0.5~1.5V` dynamic ranges for ADC to measure.
 There is also a buffer capacitor for ADC to provide more stable voltage measurement. 
 
 After assembly and testing, with this setup, a `3ms` short pulse is enough for producing a stable voltage. 
-With a `5ms` LED pulse, the ADC measurement are around `2000` (perfectly..). 
+With a `5ms` LED pulse, the ADC measurement are around `1000` in indoor.
+
+However, when outdoor with good sunlight, the measurement can go all the way up to `4000`, already close the the maximum range `4095`.
+I think it is better to change the resistor to `47k` to compensate the sunlight effect with this unnamed F3 diode. 
+Apparently, the diode I used has larger reverse current than the one I shown above. 
+Later I changed it back to `PD204/B`
+
 I set the measurement frequency to `10` times per second, and use `10` seconds windows to calculate the variance.
 Since there is no a physical unit so I use the raw ADC data to calculate the variance.  
 That is, the variance is based on `100` ADC samples. 
@@ -78,7 +86,7 @@ Here is the data.
 The variance dose increase as more droplets lands one the sensor. 
 
 The range I summarized is here:
-- Light rain: `>10`
+- Light rain: `>15`
 - Moderate rain: `>70`
 - Heavy rain: `>200`
 - Violent rain: `>500`
@@ -108,11 +116,10 @@ When the middle `2` peaks are measured, I didn't wake up.
 The battery ran out in the afternoon since there is no enough direct sunlight.
 
 A few findings here:
-- The sunlight has little affect to the variance. (althought the light measurement is not shown in the figure) 
-- The calibration seems working well. `10~70` correspones the light rain which is same as I observed. 
+- The sunlight has some affect to the variance. 
+- The calibration seems working well. `10~70` corresponds the light rain which is same as I observed. 
 - The measuring area is small, so it need a longer period for a droplet to land near it.
 - This device cannot measure rainfall in mm, since it cannot detect the size of the droplet only the frequency. 
-
 
 
 
