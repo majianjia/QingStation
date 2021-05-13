@@ -14,7 +14,6 @@ DATA_PACK   = bytes([2])
 ACK_PACK    = bytes([3])
 CLOSE_PACK  = bytes([4])
 
-# 连接的回调函数
 def on_connect(client, userdata, flags, rc):
     print(f"Connected with result code {rc}")
     client.subscribe("ota_upstream")
@@ -24,7 +23,6 @@ def on_connect(client, userdata, flags, rc):
     data3 = bytearray(m.hexdigest().encode("ascii"))
     client.publish("ota_downstream", data+data2+data3, 2)
 
-# 收到消息的回调函数
 def on_message(client, userdata, msg):
     #print(msg.topic + " " + str(msg.payload))
     ack_msg = msg.payload.decode("ascii")
