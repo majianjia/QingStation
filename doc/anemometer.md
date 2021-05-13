@@ -332,6 +332,23 @@ The reasons might be the limitation of drivers and transducers which does not al
 
 ![](figures/anemometer_excitation.png)
 
+Update: 2021-05-13
+
+The amplitude of the previous mentioned excitation is too low. 
+In a test with windspeed above `30mph`, it failed to capture the beam in most of the cases. 
+A new excitation is used here:
+~~~
+#define H 98
+#define L 0
+#define P H,L
+#define N L,H
+const uint16_t cpulse[] = {P,P,P,P,P,P,N,N,N,N,P,P,N};
+~~~
+This pattern have `6` positive phases to increase the amplitude to `1830~2270` (`440`) compared to original `1950~2150` (`200`)
+Followed by some negative phases (act as a damping).
+
+![](figures/anemometer_final_beam.png)
+
 
 #### Locating the echo - Peak matching
 
@@ -360,7 +377,7 @@ The accuracy of matching the signal can be as high as the resolution of time in 
 This is by now the most unstable part because the inference from the driver affects the detection of the echo.
 Result in sometimes this method will fail and the detection offset by one period, `25us`. 
 
-Here show some (50) 'faulty' signals; these ADC measurements are recorded during the calm wind but are fail to calculate (they looks good though). 
+Here show some (`50`) 'faulty' signals; these ADC measurements are recorded during the calm wind but are fail to calculate (they looks good though). 
 The maximum peak of the signals is marked. 
 You can see there are misaligned peaks even in a perfect calm wind. 
 
@@ -416,6 +433,12 @@ The first wind speed measurement in the north-south direction is shown below.
 
 ![](figures/first_windspeed_measurement.png)
 
+Update: 2021-05-13
+
+The start up ADC zeroing is not needed now. 
+Instead of sampling directly, I add ADC sample without excitation that run every timebefore sampling. 
+So we can have a dynamic zeroing right before the actual measuring phase. 
+Therefore, the offset by temperatures or power can be minimized. 
 
 #### Pulse compression
 Pulse compression is very commonly implemented in radar systems, Lau's works are also using it but I am not sure how he uses it. 
@@ -425,7 +448,7 @@ It is fairly straight forward to perform a matched filter (pulse compression).
 But it requires much more CPU time since it is basically a signal correlation (same as a convolution in machine learning).
 If it is needed, quantisation to `8/16bit` fixed-point then use Neural Network acceleration core will help the speed.
 
-In a rough test, for bark-code 4.1 `+++-`, the MCU took `46ms` to compute all 4 channels (correlation of `100 x 1000`).  
+In a rough test, for bark-code 4.1 `+++-`, the MCU took `46ms` to compute all `4` channels (correlation of `100 x 1000`).  
 The load is ok, but compared to the *peak matching* method, which only takes `6ms`, it is still taking too much time. 
 I didn't test a full correlation between 2 channels, e.g. North vs. South, 
 which will lead to `1000*1000` maximum, `10` times the complexity of the trial. 
@@ -443,6 +466,19 @@ The one I used is aluminium while the one he uses is plastic.
 Another potential issue is the driving voltage, my one only have `10.5Vpp` but Lau's is higher through a transformer(unknown).  
 
 Maybe just leave it by now. 
+
+Update: 2020-05-13
+
+After checking many literatures, I found that it is very difficult to modulate the excitation in high frequency. 
+The inertial of transducers delay the phase shifting at least `4` or more cycles depended on the amplitudes. 
+I only sussess to code the phase in a `10kHz` (every `4` cycles in carrier frequency (`40kHz`)).
+But the signal is too small to stand in a high winds. 
+
+It was very frastrating to try and fail. 
+During the time, I have a few email communication with Lau's. 
+And thanks for his emails to further explain his setup, I finally understand what was wrong. 
+His anemometer has significant more driving capability than the one I built. 
+And his transducers has a plastic shell which does have less inertial than the aluminium once I have. 
 
 #### Extracting wind speed and sound speed
 
@@ -567,12 +603,35 @@ therefore affect or fail the windspeed measurement.
 
 It is likely that when a bird sit on the reflective plate fail the measurement completely. 
 
-## Calibration
-TBD
-
 ## Experiments
 
+### Car test
 
+I brought a `88mm` magnet car roof mount to mount the QingStation on the roof of the car. 
+I used a few 3D printed parts and a `38 x 2.2CM` PVC tube to raise it up a little bit.
+So the air flow compressed the car won't affect too much. 
+The actual height from the car roof to the top of QingStation is `55CM`. 
+The car is `1410mm` height, so the total height is just less than `2m`. 
+
+First test:
+![](figures/anemometer_car_experiment2.jpg)
+
+Second test:
+![](figures/anemometer_car_experiment1.jpg)
+
+
+Comparison of GNSS speed and Windspeed measurement.
+
+![](figures/anemometer_gnss_vs_wind.png)
+
+The windspeed measurement is lower than the GNSS speed. 
+It might because the location is still in the bubble of the car, where the air speed is decressed.
+Or it might be something wrong with the calculation. 
+
+
+Windspeed measurement and `30sec` average.
+
+![](figures/anemometer_car_windspeed.png)
 
 
 

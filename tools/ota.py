@@ -102,12 +102,10 @@ def recv_message():
 
     packtype = bytearray(CLOSE_PACK)
     client.publish("ota_downstream", packtype, 2)
-    print("\nfw upload finished, device rebooting")
+    print("\nFirmware upload finished, device rebooting")
     client.disconnect()
 
 
 t = threading.Thread(target=recv_message)
 t.start()
 client.loop_forever()
-
-
