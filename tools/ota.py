@@ -2,14 +2,12 @@ import paho.mqtt.client as mqtt
 import threading
 from multiprocessing import Queue
 import numpy as np
-import sys
 import hashlib
 import argparse
+from datetime import datetime
 
-# array = bytearray(np.ones(12).astype('byte'))
-# print(len(array), array)
 
-INITIAL_PACK = bytes([1]) # stupid python conversion
+INITIAL_PACK= bytes([1]) # stupid python conversion
 DATA_PACK   = bytes([2])
 ACK_PACK    = bytes([3])
 CLOSE_PACK  = bytes([4])
@@ -46,7 +44,7 @@ f_fw = open(file, 'rb')
 fw_bin = f_fw.read()
 m = hashlib.md5()
 m.update(fw_bin)
-print(m.hexdigest())
+print("firmware size:", len(fw_bin), "MD5:", m.hexdigest())
 
 client = mqtt.Client()
 client.on_connect = on_connect
@@ -57,6 +55,8 @@ client.connect(uri, port, 60)
 recv_msg_queue = Queue(1)
 def recv_message():
     fw_bin_idx = -256
+    t_start = datetime.now()
+    byte_sent = 0
     while True:
         ack_msg = recv_msg_queue.get()
         ack = ack_msg.split(',')
@@ -95,7 +95,10 @@ def recv_message():
         cs[1] = int(sum / 256)
 
         client.publish("ota_downstream", pack + cs, 2)
-        print("\rsending update,", fw_bin_idx, "of", len(fw_bin),"bytes finished, ",
+        byte_sent += size
+        speed = round(byte_sent/(datetime.now()-t_start).total_seconds())
+        print("\rsending update,", fw_bin_idx, "of", len(fw_bin),"bytes finished,",
+              str(speed), "Bytes/sec",
               str(np.round(fw_bin_idx*100/len(fw_bin),1))+"% done", end='', flush=True)
 
     packtype = bytearray(CLOSE_PACK)

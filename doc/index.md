@@ -1,10 +1,10 @@
-# General Informations
+# General Information
 
-This document demostrate the general development of the QingStation. 
-The development of the anemometer is discussed in its [dedicated document](anemometer.md).
+This document demonstrate the general development of the QingStation. 
 
-
-## BOM
+- [Anemometer Development](anemometer.md)
+- [OTA firmware update](ota.md)
+- [Rain Sensor Development](rain_sensor.md)
 
 
 

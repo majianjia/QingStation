@@ -41,6 +41,7 @@ We can implement plenty of them as long as we have space on the PCB.
 There are some very detailed post that recall the development:
 - [Ultrasonic Anemometer](doc/anemometer.md)
 - [Optical rain sensor](doc/rain_sensor.md)
+- [OTA firmware update](doc/ota.md)
 
 ## Features and functions
 
@@ -121,7 +122,7 @@ However, I have implement USB CDC device, which works well in Android phone as a
 The methods I intended to use are:
 - A configuration file (JSON) in SDCard.
 - USB port (A virtual UART device, also known as CDC)
-- UART1 (act as AT Server or AT Client) 
+- LPUART1 (act as AT Server or AT Client) 
 
 Currently, the JSON method is the primary method. Because it is easy to use and the settings are obvious. 
 Plugging a empty SD card, QingStation will write a default configuration file called `config.json`.
@@ -133,15 +134,17 @@ AT CMD is ok to use but setting are not easily done by a human.
 For the UART1, I plan to make it dedicated to AT server or client. 
 When it is used as AT server, the QingStation can be configured by Arduino or other user boards and provide data for them. 
 When it is used as AT Client, it can control other devices to send data directly to server, such as BLE modules, LoRA, or GPRS/4G. 
-RT-Thread already support common AT hardwares, including SIM800C.
+RT-Thread already support common AT hardware, including SIM800C.
 With RT-Thread's rich supports for IoT software packages, it is straight forward to implement Internet, MQTT and others. 
 
 
-# Author
+# Author & Copy Right
+All materials under this folder is licensed under *CC* BY-NC *4.0 License*
+Please contact the author if you have any request.
+ 
 Jianjia Ma 
 
 `majianjia(*at*)live.com`
-
 
 
 

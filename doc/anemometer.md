@@ -625,11 +625,14 @@ Comparison of GNSS speed and Windspeed measurement.
 ![](figures/anemometer_gnss_vs_wind.png)
 
 The windspeed measurement is lower than the GNSS speed. 
-It might because the location is still in the bubble of the car, where the air speed is decressed.
-Or it might be something wrong with the calculation. 
+
+- It might because the location is still in the bubble of the car, where the air speed is decreased.
+- Or it might be something wrong with the calculation. 
+- Or it might be the air flow from the car ahead of me.
+- Or wind. 
 
 
-Windspeed measurement and `30sec` average.
+Here is the windspeed measurement and `30sec` average. A `30sec` average makes more sense.
 
 ![](figures/anemometer_car_windspeed.png)
 
