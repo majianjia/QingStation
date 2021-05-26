@@ -624,29 +624,51 @@ Comparison of GNSS speed and Windspeed measurement.
 
 ![](figures/anemometer_gnss_vs_wind.png)
 
-The windspeed measurement is lower than the GNSS speed. 
+The windspeed measurement is higher than the GNSS speed. 
 
-- It might because the location is still in the bubble of the car, where the air speed is decreased.
+- It might because the location is still in the compressed bubble of the car, where the air speed is being compressed and increased.
 - Or it might be something wrong with the calculation. 
 - Or it might be the air flow from the car ahead of me.
 - Or wind. 
 
 
-Here is the windspeed measurement and `30sec` average. A `30sec` average makes more sense.
+Here is the windspeed measurement and `30sec` average. A `30sec` average makes more sense.
 
 ![](figures/anemometer_car_windspeed.png)
 
+Most of the time, we just stopped by 5 or 6 passing trains in the middle of the road. Fortunately, we were the first car in the queue so I do enjoy the time watching them. 
 
+![anemometer_car_experiment3](figures/anemometer_car_experiment3.jpg)
 
+### Motorway test
 
+I printed a much shorter stick to lower the center of gravity. 
+The plan was to test the anemometer in a high wind speed, because it was never done.
 
+I only have the rain sensor lens attached to the vented top, so I install that one. 
+And... it didn't take long to reach a heavy rain. 
 
+Unfortunately, the SD card failed at the very beginning hitting the rain. 
+The QingStation kept sending MQTT messages for another hour in the heavy rain until we reached the destination (Durdle Door).
+- The Anemometer failed after `~30min` in the rain. 
+- All digital sensors down when the circuit was wet. 
+- The Barometer failed for a few minutes then came back up.
+- The Battery voltage dropped dramatically to `3.1V` for some minutes when the connector got wet. 
+- RTC clock stopped (crystal got wet). 
+Not sure if there are electrochemical reaction or the ADC pins got wet (maybe that is also the reason that Anemometer failed.). 
+- The SD card has a few random files/folders written. Data files are all fine but logging files are wrong. 
+- Logging was failed and the MQTT messages are not saved so I have no idea what was wrong. 
 
+Once everything is dry, they are all back and working well. 
 
+![anemometer_motorway_rain](figures/anemometer_motorway_rain.png)
 
+The log shows perfect tracking of windspeed below `~72km/h` (`20m/s`), but it started to fail sometime at `108km/h` (`30m/s`).
+This is also shown in the error codes (not listed). Anemometer started to struggle a bit at high speed (`30m/s`), reporting errors almost every `3` sec. But it still can provide a good measurement within `1` second recording period. But there were `3` failures that report even `200km/h`. 
 
+I think the results are acceptable, since `>20m/s` wind doesn't occur all the time. 
 
-
+Due to the mounting point is lower, the air acceleration effect is larger than the previous low speed test. I think it is in a normal range. But since I don't have access to wind tunnel to calibrate the sensor. There is not much I can do. 
 
 
 
