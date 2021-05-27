@@ -1,7 +1,7 @@
 # QingStation 青站
 A compact weather station.
 
-![](doc/figures/qingstation-render1.png)
+![](doc/figures/anemometer_car_experiment1.jpg)
 
 ## About this project
 The goal is to build a small and versatile weather stations.
@@ -70,9 +70,15 @@ For the hardware V1.1
 - USB (CDC and/or MassStorage)
 
 **Power Consumption**
-- Normal: 27~30mA
-- Normal + GNSS: 60mA
+- Normal 20~22mA
+- Normal + GNSS: ~45mA
+- Normal + GNSS + ESP8266(MQTT @ 1Hz): ~100mA
 - Sleep: unknown 
+
+**External Communication**
+- ESP8266 (AT)
+- ESP32 (AT)
+- SIM800c
 
 ### Functions description
 
@@ -120,9 +126,9 @@ So we probably cannot just connect to a smartphone App to control it unless I a 
 However, I have implement USB CDC device, which works well in Android phone as a serial ports. 
 
 The methods I intended to use are:
-- A configuration file (JSON) in SDCard.
-- USB port (A virtual UART device, also known as CDC)
-- LPUART1 (act as AT Server or AT Client) 
+- A configuration file (JSON) in SDCard - implemented.
+- USB port (A virtual UART device, also known as CDC) - future;
+- LPUART1 (act as AT Server for configuration) - future;
 
 Currently, the JSON method is the primary method. Because it is easy to use and the settings are obvious. 
 Plugging a empty SD card, QingStation will write a default configuration file called `config.json`.
@@ -131,7 +137,7 @@ Unplug sd card and revise it using any text editor. The new configuration will b
 USB port and UART require the PC to have a terminal or some tools that can talk through a serial port. 
 AT CMD is ok to use but setting are not easily done by a human. 
 
-For the UART1, I plan to make it dedicated to AT server or client. 
+For the LPUART, I plan to make it dedicated to AT server or client. 
 When it is used as AT server, the QingStation can be configured by Arduino or other user boards and provide data for them. 
 When it is used as AT Client, it can control other devices to send data directly to server, such as BLE modules, LoRA, or GPRS/4G. 
 RT-Thread already support common AT hardware, including SIM800C.
@@ -139,9 +145,9 @@ With RT-Thread's rich supports for IoT software packages, it is straight forward
 
 
 # Author & Copy Right
-All materials under this folder is licensed under *CC* BY-NC *4.0 License*
+All materials under this repository is licensed under *CC* BY-NC *4.0 License*
 Please contact the author if you have any request.
- 
+
 Jianjia Ma 
 
 `majianjia(*at*)live.com`
