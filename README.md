@@ -36,6 +36,11 @@ Elevating a large mass on the mast decreases the stability of the ship.
 Today's digital sensors are easy to use. 
 We can implement plenty of them as long as we have space on the PCB. 
 
+## Repositories
+- Hardware: please see [the PCB folder](PCB) in this repo. 
+- Firmware: [QingStation-Firmware](https://github.com/majianjia/QingStation-Firmware)
+- Bootloader: [QingStation-Bootloader](https://github.com/majianjia/QingStation-bootloader)
+
 ## Building logs
 
 There are some very detailed post that recall the development:
