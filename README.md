@@ -35,11 +35,11 @@ Elevating a large mass on the mast decreases the stability of the ship.
 
 - Versatile
 
-Today's digital sensors are easy to use. 
-We can implement plenty of them as long as we have space on the PCB. 
+While keeping it small, implement as many digital sensors as possible.
+There are 2 DIY analogue sensors, the ultrasonic anemometer and infrared rain sensor onboard. 
 
 ## Repositories
-- Hardware: please see [the PCB folder](PCB) in this repo. 
+- Hardware: please see [the PCB folder](PCB) in the[main repo](https://github.com/majianjia/QingStation)
 - Firmware: [QingStation-Firmware](https://github.com/majianjia/QingStation-Firmware)
 - Bootloader: [QingStation-Bootloader](https://github.com/majianjia/QingStation-bootloader)
 
