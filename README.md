@@ -1,4 +1,6 @@
 # QingStation 青站
+[![License: CC BY-NC 4.0](https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc/4.0/) 
+
 A compact weather station.
 
 ![](doc/figures/anemometer_car_experiment1.jpg)
@@ -150,7 +152,7 @@ With RT-Thread's rich supports for IoT software packages, it is straight forward
 
 
 # Author & Copy Right
-All materials under this repository is licensed under *CC* BY-NC *4.0 License*
+All materials under this repository is licensed under *CC* BY-NC *4.0 License* [![License: CC BY-NC 4.0](https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc/4.0/) 
 Please contact the author if you have any request.
 
 Jianjia Ma 
