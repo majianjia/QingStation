@@ -81,7 +81,7 @@ At the very beginning, every IC is working at maximum power, result in an averag
 A 18650 only last for a night. 
 
 The panels are rated 12V 160mAh. 
-I connect 2 of them in parallel through a Schottky diode to a CN3971 MPPT charger. 
+I connected 2 of them in parallel through a Schottky diode to a CN3971 MPPT charger. 
 The actual efficiency is another story.  
 When the solar panels are laying flat, each of them produces 100mA in the noon. 
 The CN3971 only manage to extract 450mA to charge the battery and power the station at 3.7V. 
