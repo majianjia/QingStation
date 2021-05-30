@@ -46,6 +46,7 @@ There are 2 DIY analogue sensors, the ultrasonic anemometer and infrared rain se
 ## Building logs
 
 There are some very detailed post that recall the development:
+- [Assembly](doc/assembly.md)
 - [Ultrasonic Anemometer](doc/anemometer.md)
 - [Optical rain sensor](doc/rain_sensor.md)
 - [OTA firmware update](doc/ota.md)
