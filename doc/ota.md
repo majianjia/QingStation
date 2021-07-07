@@ -30,7 +30,7 @@ You can see that it is very simplified.
 - No Authorization. 
 - No validation for payload expects the data package.
 - No handshake.
-- Dose not support.
+- Dose not support resume from break point.
 
 All of them are to simplify the implementation. 
 
