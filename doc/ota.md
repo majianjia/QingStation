@@ -57,12 +57,14 @@ The most important parts are:
 
 ### Finishing the update
 
-Once all the firmware is transferred completed, QingStation make an software reset and handover to the bootloader to update the firmware. 
+Once all the firmware is transferred completed, application destroys its own tag to mark the firmware invalid. 
+Then it makes an software reset and handover to the bootloader.
 
 The bootloader will read the tags especially the MD5 checksum.
 It will perform a MD5 checksum through the Application and OTA space, and it will compare the MD5 with those tag. 
 
-When the OTA is good and its version > the version in the current Application space, it will perform an update. (copy OTA to application).
+Once the bootloader checks and finds out that application space is invalid and OTA is valid, it will copy the firmware from OTA space to Application space. 
+Or when both firmware are good and but OTA version > application version, it will also perform an update. (copy OTA to application).
 
 ## Performance
 
