@@ -70,7 +70,7 @@ Or when both firmware are good and but OTA version > application version, it wil
 
 I did a test with the below setting:
 When using ESP8266 as the WIFI module and the broker from AWS located in the UK. 
-- The uploading speed is `850Bytes/sec` when using `QS2` MQTT subscription and `530Bytes/sec` for `QS0`.
+- The uploading speed is `850Bytes/sec` when using `QS0` MQTT subscription and `530Bytes/sec` for `QS2`.
 
 Not great but still faster than go to the roof and disassembling everything.
 
